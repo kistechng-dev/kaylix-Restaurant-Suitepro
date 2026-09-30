@@ -1,0 +1,6 @@
+{
+  "name": "Kaylix Kitchen & Eatery Management Suite",
+  "description": "Official download portal, edition selector (Trial, Basic, Standard, Enterprise), payment bank details, WhatsApp order sender, and Master License Key Generator.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

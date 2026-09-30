@@ -1,0 +1,156 @@
+import React from 'react';
+import { UtensilsCrossed, PhoneCall, Mail, MapPin, ShieldCheck, Lock } from 'lucide-react';
+import { VENDOR_CONTACT } from '../data/mockData';
+
+interface FooterProps {
+  onScrollToSection: (sectionId: string) => void;
+  onOpenAdmin: () => void;
+}
+
+export const Footer: React.FC<FooterProps> = ({ onScrollToSection, onOpenAdmin }) => {
+  return (
+    <footer className="bg-slate-100 border-t border-slate-200 pt-12 pb-10 text-slate-700 text-xs">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-7 mb-10">
+          {/* Brand Col */}
+          <div className="lg:col-span-2 space-y-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-black shadow-xs">
+                <UtensilsCrossed className="w-4 h-4" />
+              </div>
+              <span className="text-base font-black text-slate-900 tracking-tight">
+                KAYLIX<span className="text-amber-600">.KITCHEN</span>
+              </span>
+            </div>
+            <p className="text-slate-600 text-xs leading-relaxed max-w-xs font-medium">
+              The premier Point of Sale, Kitchen Display, and Recipe Inventory system engineered for restaurants, eateries, bars, lounges, and multi-branch food chains.
+            </p>
+            <div className="flex items-center gap-1.5 text-slate-800 font-mono text-[11px] font-bold">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Stable Build: {VENDOR_CONTACT.installerVersion}</span>
+            </div>
+          </div>
+
+          {/* Quick Links */}
+          <div className="space-y-2.5">
+            <h4 className="text-slate-900 font-black text-xs uppercase tracking-wider">Quick Navigation</h4>
+            <ul className="space-y-1.5 text-xs font-medium">
+              <li>
+                <button
+                  onClick={() => onScrollToSection('editions')}
+                  className="hover:text-amber-700 transition-colors"
+                >
+                  Packages & Pricing
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onScrollToSection('preview')}
+                  className="hover:text-amber-700 transition-colors"
+                >
+                  Software Tour
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onScrollToSection('comparison')}
+                  className="hover:text-amber-700 transition-colors"
+                >
+                  Feature Matrix
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onScrollToSection('bank-details')}
+                  className="hover:text-amber-700 transition-colors"
+                >
+                  Bank Transfer Details
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => onScrollToSection('whatsapp-order')}
+                  className="hover:text-emerald-700 transition-colors font-bold text-emerald-800"
+                >
+                  WhatsApp Order Form
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          {/* Software Packages */}
+          <div className="space-y-2.5">
+            <h4 className="text-slate-900 font-black text-xs uppercase tracking-wider">Packages</h4>
+            <ul className="space-y-1.5 text-xs text-slate-700 font-medium">
+              <li>
+                <strong className="text-slate-900">Trial Edition:</strong> 7-Day Free Full Pass
+              </li>
+              <li>
+                <strong className="text-slate-900">Basic Package:</strong> Single POS + 1 Wireless
+              </li>
+              <li>
+                <strong className="text-amber-800">Standard Package:</strong> Multi-User + KDS Pass
+              </li>
+              <li>
+                <strong className="text-purple-900">Enterprises:</strong> Omnichannel Flagship
+              </li>
+            </ul>
+          </div>
+
+          {/* Contact & Support */}
+          <div className="space-y-2.5">
+            <h4 className="text-slate-900 font-black text-xs uppercase tracking-wider">Support Desk</h4>
+            <ul className="space-y-1.5 text-xs font-medium">
+              <li className="flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                <a href={`mailto:${VENDOR_CONTACT.email}`} className="hover:text-slate-900 text-slate-800">
+                  {VENDOR_CONTACT.email}
+                </a>
+              </li>
+              <li className="flex items-center gap-1.5">
+                <PhoneCall className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                <a
+                  href={`https://wa.me/${VENDOR_CONTACT.whatsappNumber.replace(/[^0-9]/g, '')}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="hover:text-emerald-800 font-bold text-emerald-800"
+                >
+                  {VENDOR_CONTACT.whatsappDisplay}
+                </a>
+              </li>
+              <li className="flex items-start gap-1.5 text-slate-600">
+                <MapPin className="w-3.5 h-3.5 text-rose-600 shrink-0 mt-0.5" />
+                <span>{VENDOR_CONTACT.location}</span>
+              </li>
+              <li className="text-[11px] text-slate-500 pt-0.5">
+                {VENDOR_CONTACT.supportHours}
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom line */}
+        <div className="pt-6 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-600">
+          <div>
+            © {new Date().getFullYear()} Kaylix Technology & Kistech Integrated Systems Ltd.
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1 font-bold text-slate-800">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
+              100% Genuine Software
+            </span>
+            <span>•</span>
+            <button
+              onClick={onOpenAdmin}
+              className="text-slate-500 hover:text-slate-900 font-medium flex items-center gap-1 transition-colors"
+              title="Restricted Staff Admin Portal"
+            >
+              <Lock className="w-3 h-3" />
+              <span>Admin Portal</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
