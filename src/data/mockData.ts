@@ -278,9 +278,9 @@ export const HARDWARE_ADDONS: HardwareAddon[] = [
 export const VENDOR_CONTACT = {
   name: 'Kaylix Software & Kistech Systems',
   email: 'kistechng@gmail.com',
-  whatsappNumber: '+2348039281726',
-  whatsappDisplay: '+234 803 928 1726',
-  phoneAlt: '+234 812 405 8821',
+  whatsappNumber: '2348060395329',
+  whatsappDisplay: '234 806 0395 329',
+  phoneAlt: '234 806 0395 329',
   supportHours: 'Monday - Saturday: 8:00 AM - 9:00 PM WAT',
   location: 'Lagos & Abuja, Nigeria • Serving Africa & Global Hospitality',
   installerVersion: 'v3.4.2 Enterprise Stable',

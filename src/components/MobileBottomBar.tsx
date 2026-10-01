@@ -1,26 +1,27 @@
 import React from 'react';
-import { Sparkles, Package, Building2, MessageSquare, Download, Flame } from 'lucide-react';
+import { Package, Building2, MessageSquare, Download, Flame } from 'lucide-react';
+import { PageType } from './Navbar';
 
 interface MobileBottomBarProps {
-  activeSection: string;
-  onScrollToSection: (sectionId: string) => void;
+  currentPage: PageType;
+  onNavigateToPage: (page: PageType) => void;
   onOpenTrialModal: () => void;
 }
 
 export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
-  activeSection,
-  onScrollToSection,
+  currentPage,
+  onNavigateToPage,
   onOpenTrialModal,
 }) => {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 backdrop-blur-xl border-t border-slate-200/90 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] px-2 pt-1 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
       <div className="max-w-md mx-auto grid grid-cols-5 gap-1 items-center">
-        {/* Home / Tour */}
+        {/* Tour Page */}
         <button
-          onClick={() => onScrollToSection('hero')}
+          onClick={() => onNavigateToPage('tour')}
           className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all ${
-            activeSection === 'hero' || activeSection === 'preview'
-              ? 'text-amber-600 bg-amber-50/80 font-bold'
+            currentPage === 'tour'
+              ? 'text-amber-600 bg-amber-50/90 font-bold'
               : 'text-slate-600 hover:text-slate-900 active:scale-95'
           }`}
         >
@@ -28,17 +29,17 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
           <span className="text-[10px] font-bold tracking-tight mt-0.5">Tour</span>
         </button>
 
-        {/* Packages */}
+        {/* Choose Your Hospitality Package Page */}
         <button
-          onClick={() => onScrollToSection('editions')}
+          onClick={() => onNavigateToPage('plan')}
           className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all ${
-            activeSection === 'editions'
-              ? 'text-amber-600 bg-amber-50/80 font-bold'
+            currentPage === 'plan'
+              ? 'text-amber-600 bg-amber-50/90 font-bold'
               : 'text-slate-600 hover:text-slate-900 active:scale-95'
           }`}
         >
           <Package className="w-5 h-5 stroke-[2.2]" />
-          <span className="text-[10px] font-bold tracking-tight mt-0.5">Plans</span>
+          <span className="text-[10px] font-bold tracking-tight mt-0.5">Plan</span>
         </button>
 
         {/* Free Trial Center Button */}
@@ -52,12 +53,12 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
           <span className="text-[10px] font-black text-amber-700 tracking-tight mt-0.5">7-Day Trial</span>
         </button>
 
-        {/* Bank Payment Details */}
+        {/* Direct Bank Transfer & Payment Details Page */}
         <button
-          onClick={() => onScrollToSection('bank-details')}
+          onClick={() => onNavigateToPage('banks')}
           className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all ${
-            activeSection === 'bank-details'
-              ? 'text-emerald-700 bg-emerald-50/80 font-bold'
+            currentPage === 'banks'
+              ? 'text-emerald-700 bg-emerald-50/90 font-bold'
               : 'text-slate-600 hover:text-slate-900 active:scale-95'
           }`}
         >
@@ -65,12 +66,12 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
           <span className="text-[10px] font-bold tracking-tight mt-0.5">Banks</span>
         </button>
 
-        {/* WhatsApp Order */}
+        {/* My Order Page */}
         <button
-          onClick={() => onScrollToSection('whatsapp-order')}
+          onClick={() => onNavigateToPage('order')}
           className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all ${
-            activeSection === 'whatsapp-order'
-              ? 'text-emerald-700 bg-emerald-50/80 font-bold'
+            currentPage === 'order'
+              ? 'text-emerald-700 bg-emerald-50/90 font-bold'
               : 'text-slate-600 hover:text-slate-900 active:scale-95'
           }`}
         >

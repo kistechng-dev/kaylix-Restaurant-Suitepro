@@ -210,7 +210,7 @@ ACTIVATION INSTRUCTIONS FOR CASHIER TERMINAL:
 --------------------------------------------------------------------------------
 TECHNICAL SUPPORT & RESELLER DESK:
 Email: kistechng@gmail.com
-WhatsApp Helpline: +234 803 928 1726
+WhatsApp Helpline: 234 806 0395 329
 Office: Lagos & Abuja, Nigeria
 ================================================================================`;
 }

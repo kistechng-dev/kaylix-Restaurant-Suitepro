@@ -11,12 +11,15 @@ import {
 import { BANK_ACCOUNTS, VENDOR_CONTACT } from '../data/mockData';
 
 interface BankDetailsSectionProps {
-  onScrollToWhatsApp: () => void;
+  onScrollToWhatsApp?: () => void;
+  onProceedToOrder?: () => void;
 }
 
 export const BankDetailsSection: React.FC<BankDetailsSectionProps> = ({
   onScrollToWhatsApp,
+  onProceedToOrder,
 }) => {
+  const handleProceed = onProceedToOrder || onScrollToWhatsApp;
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [customNarrationRef] = useState(
     () => `KYLX-${Math.floor(10000 + Math.random() * 90000)}`
@@ -256,11 +259,11 @@ export const BankDetailsSection: React.FC<BankDetailsSectionProps> = ({
               Need invoice or help? Contact <span className="text-amber-800 font-bold">{VENDOR_CONTACT.email}</span>
             </div>
             <button
-              onClick={onScrollToWhatsApp}
+              onClick={handleProceed}
               className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all"
             >
               <Send className="w-3.5 h-3.5" />
-              <span>Go to WhatsApp Order</span>
+              <span>Proceed to My Order</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>

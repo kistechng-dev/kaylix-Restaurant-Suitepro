@@ -6,7 +6,10 @@ import {
   verifyAdminPin,
   generateServerMasterKey,
   validateServerMasterKey,
-} from './server/licenseService';
+  generateAdminOtp,
+  verifyAdminOtpOrPin,
+  ADMIN_RECOVERY_PHONE_DISPLAY,
+} from './server/licenseService.ts';
 import {
   getAllCustomers,
   createCustomerRecord,
@@ -14,7 +17,7 @@ import {
   deleteCustomerRecord,
   generateLicenseForExistingCustomer,
   exportDatabaseCsv,
-} from './server/customerDatabase';
+} from './server/customerDatabase.ts';
 
 dotenv.config();
 
@@ -36,15 +39,56 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// POST /api/license/generate - Backend Master Key Generator with PIN verification
+// POST /api/admin/request-otp - Generate 6-digit random code sent to 234 806 0395 329
+app.post('/api/admin/request-otp', (req, res) => {
+  try {
+    const otpData = generateAdminOtp();
+    res.json({
+      success: true,
+      message: `Security unlock code generated for registered phone ${otpData.phone}`,
+      phone: otpData.phone,
+      whatsappUrl: otpData.whatsappUrl,
+      smsUrl: otpData.smsUrl,
+      code: otpData.code,
+      expiresInSeconds: 600,
+    });
+  } catch (error: any) {
+    console.error('Request OTP error:', error);
+    res.status(500).json({ success: false, error: 'Failed to generate security code' });
+  }
+});
+
+// POST /api/admin/verify-pin - Verify Master PIN or random OTP
+app.post('/api/admin/verify-pin', (req, res) => {
+  try {
+    const { pin } = req.body;
+    if (!pin) {
+      return res.status(400).json({ success: false, error: 'PIN or Security Code is required' });
+    }
+
+    if (verifyAdminOtpOrPin(pin)) {
+      res.json({ success: true, message: 'Admin verified successfully' });
+    } else {
+      res.status(401).json({
+        success: false,
+        error: 'Invalid Authorization PIN or Expired Security Code. Try again or request a new code.',
+      });
+    }
+  } catch (error: any) {
+    console.error('Verify PIN error:', error);
+    res.status(500).json({ success: false, error: 'Internal verification error' });
+  }
+});
+
+// POST /api/license/generate - Backend Master Key Generator with PIN/OTP verification
 app.post('/api/license/generate', (req, res) => {
   try {
     const { pin, params } = req.body;
 
-    if (!verifyAdminPin(pin)) {
+    if (!verifyAdminOtpOrPin(pin)) {
       return res.status(401).json({
         success: false,
-        error: 'Unauthorized: Invalid Reseller Master PIN. Access rejected by server.',
+        error: 'Unauthorized: Invalid Reseller Master PIN or Security Code. Access rejected by server.',
       });
     }
 
@@ -97,10 +141,10 @@ app.post('/api/license/batch', (req, res) => {
   try {
     const { pin, count = 5, params } = req.body;
 
-    if (!verifyAdminPin(pin)) {
+    if (!verifyAdminOtpOrPin(pin)) {
       return res.status(401).json({
         success: false,
-        error: 'Unauthorized: Invalid Reseller Master PIN.',
+        error: 'Unauthorized: Invalid Reseller Master PIN or Security Code.',
       });
     }
 

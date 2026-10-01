@@ -1,20 +1,33 @@
 import React from 'react';
 import { UtensilsCrossed, PhoneCall, Mail, MapPin, ShieldCheck, Lock } from 'lucide-react';
 import { VENDOR_CONTACT } from '../data/mockData';
+import { PageType } from './Navbar';
 
 interface FooterProps {
-  onScrollToSection: (sectionId: string) => void;
+  onNavigateToPage?: (page: PageType) => void;
+  onScrollToSection?: (sectionId: string) => void;
   onOpenAdmin: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onScrollToSection, onOpenAdmin }) => {
+export const Footer: React.FC<FooterProps> = ({ onNavigateToPage, onScrollToSection, onOpenAdmin }) => {
+  const handleNav = (target: PageType | string) => {
+    if (onNavigateToPage) {
+      if (target === 'whatsapp-order' || target === 'order') onNavigateToPage('order');
+      else if (target === 'bank-details' || target === 'banks') onNavigateToPage('banks');
+      else if (target === 'editions' || target === 'comparison' || target === 'plan') onNavigateToPage('plan');
+      else onNavigateToPage('tour');
+    } else if (onScrollToSection) {
+      onScrollToSection(target);
+    }
+  };
+
   return (
     <footer className="bg-slate-100 border-t border-slate-200 pt-12 pb-10 text-slate-700 text-xs">
       <div className="max-w-5xl mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-7 mb-10">
           {/* Brand Col */}
           <div className="lg:col-span-2 space-y-3">
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => handleNav('tour')}>
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-black shadow-xs">
                 <UtensilsCrossed className="w-4 h-4" />
               </div>
@@ -33,46 +46,38 @@ export const Footer: React.FC<FooterProps> = ({ onScrollToSection, onOpenAdmin }
 
           {/* Quick Links */}
           <div className="space-y-2.5">
-            <h4 className="text-slate-900 font-black text-xs uppercase tracking-wider">Quick Navigation</h4>
+            <h4 className="text-slate-900 font-black text-xs uppercase tracking-wider">Pages</h4>
             <ul className="space-y-1.5 text-xs font-medium">
               <li>
                 <button
-                  onClick={() => onScrollToSection('editions')}
+                  onClick={() => handleNav('tour')}
                   className="hover:text-amber-700 transition-colors"
                 >
-                  Packages & Pricing
+                  POS Software Tour
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => onScrollToSection('preview')}
-                  className="hover:text-amber-700 transition-colors"
+                  onClick={() => handleNav('plan')}
+                  className="hover:text-amber-700 transition-colors text-left"
                 >
-                  Software Tour
+                  Choose Your Hospitality Package
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => onScrollToSection('comparison')}
-                  className="hover:text-amber-700 transition-colors"
+                  onClick={() => handleNav('banks')}
+                  className="hover:text-amber-700 transition-colors text-left"
                 >
-                  Feature Matrix
+                  Direct Bank Transfer & Payment Details
                 </button>
               </li>
               <li>
                 <button
-                  onClick={() => onScrollToSection('bank-details')}
-                  className="hover:text-amber-700 transition-colors"
-                >
-                  Bank Transfer Details
-                </button>
-              </li>
-              <li>
-                <button
-                  onClick={() => onScrollToSection('whatsapp-order')}
+                  onClick={() => handleNav('order')}
                   className="hover:text-emerald-700 transition-colors font-bold text-emerald-800"
                 >
-                  WhatsApp Order Form
+                  My Order Page
                 </button>
               </li>
             </ul>

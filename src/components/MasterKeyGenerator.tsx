@@ -119,14 +119,14 @@ export const MasterKeyGenerator: React.FC<MasterKeyGeneratorProps> = ({
       return;
     }
     // Verify PIN with quick local check or backend ping
-    if (pinInput.trim() === '2026' || pinInput.trim() === 'admin' || pinInput.trim() === 'kaylix') {
+    if (pinInput.trim() === '8492' || pinInput.trim() === '2026' || pinInput.trim() === 'admin' || pinInput.trim() === 'kaylix') {
       setIsUnlocked(true);
       setPinError(null);
       try {
         confetti({ particleCount: 30, spread: 60, origin: { y: 0.7 } });
       } catch (err) {}
     } else {
-      setPinError('Invalid Master PIN. Default reseller code is 2026.');
+      setPinError('Invalid Master PIN. Default reseller code is 8492 or 2026.');
     }
   };
 

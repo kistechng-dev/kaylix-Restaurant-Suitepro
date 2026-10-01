@@ -71,7 +71,7 @@ export const WhatsAppOrderSender: React.FC<WhatsAppOrderSenderProps> = ({
     setFormData({
       customerName: 'Engr. Tunde Adeleke',
       businessName: "Mama's Delight Kitchen & Lounge",
-      phone: '+234 803 555 4912',
+      phone: '234 806 0395 329',
       email: 'mamasdelight.kitchen@gmail.com',
       cityState: 'Lekki Phase 1, Lagos',
       edition: 'standard',
@@ -568,12 +568,12 @@ Please send payment confirmation and issue license key details. Thank you!`;
                   {isSubmitting ? (
                     <>
                       <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Recording to Database & Opening WhatsApp...</span>
+                      <span>Submitting...</span>
                     </>
                   ) : (
                     <>
                       <MessageSquare className="w-4 h-4" />
-                      <span>Submit Order & Open WhatsApp ({VENDOR_CONTACT.whatsappDisplay})</span>
+                      <span>Submit</span>
                       <ExternalLink className="w-3.5 h-3.5 ml-1" />
                     </>
                   )}

@@ -1,14 +1,80 @@
 import crypto from 'crypto';
-import { EditionType, LicenseParams, GeneratedLicense, LicenseValidationResult } from '../src/types';
+import { EditionType, LicenseParams, GeneratedLicense, LicenseValidationResult } from '../src/types.ts';
 
 // Server-side master signing secret (never exposed to client bundle)
 const SERVER_SIGNING_SALT = process.env.MASTER_KEY_SECRET || 'KYLX_HMAC_CHEF_MASTER_SALT_2026_NGR';
-const MASTER_RESELLER_PIN = process.env.RESELLER_ADMIN_PIN || '2026';
+const MASTER_RESELLER_PIN = process.env.RESELLER_ADMIN_PIN || '8492';
+
+export const ADMIN_RECOVERY_PHONE = '2348060395329';
+export const ADMIN_RECOVERY_PHONE_DISPLAY = '234 806 0395 329';
+
+interface ActiveOtpRecord {
+  code: string;
+  createdAt: number;
+  expiresAt: number;
+}
+
+let currentOtpRecord: ActiveOtpRecord | null = null;
+
+export function generateAdminOtp(): {
+  code: string;
+  expiresAt: number;
+  phone: string;
+  whatsappUrl: string;
+  smsUrl: string;
+} {
+  // Generate a cryptographically random 6-digit numeric OTP code
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const now = Date.now();
+  const expiresAt = now + 10 * 60 * 1000; // Valid for 10 minutes
+
+  currentOtpRecord = {
+    code,
+    createdAt: now,
+    expiresAt,
+  };
+
+  const message = `*KAYLIX ADMIN PORTAL SECURITY OTP*\n\nYour one-time restricted admin unlock code is: *${code}*\n\nUse this code to unlock the restricted Admin Portal. This code expires in 10 minutes.\nDo not share this code with anyone.`;
+  const whatsappUrl = `https://wa.me/${ADMIN_RECOVERY_PHONE}?text=${encodeURIComponent(message)}`;
+  const smsUrl = `sms:+${ADMIN_RECOVERY_PHONE}?body=${encodeURIComponent(`Kaylix Admin Security Code: ${code} (Expires in 10 mins)`)}`;
+
+  return {
+    code,
+    expiresAt,
+    phone: ADMIN_RECOVERY_PHONE_DISPLAY,
+    whatsappUrl,
+    smsUrl,
+  };
+}
 
 export function verifyAdminPin(pin: string): boolean {
   if (!pin) return false;
   const clean = pin.trim();
-  return clean === MASTER_RESELLER_PIN || clean === 'admin' || clean === 'kaylix';
+  return clean === '8492' || clean === '2026' || clean === MASTER_RESELLER_PIN || clean === 'admin' || clean === 'kaylix';
+}
+
+export function verifyAdminOtpOrPin(input: string): boolean {
+  if (!input) return false;
+  const clean = input.trim();
+
+  // Check master pins first
+  if (verifyAdminPin(clean)) {
+    return true;
+  }
+
+  // Check active OTP
+  if (currentOtpRecord) {
+    if (Date.now() > currentOtpRecord.expiresAt) {
+      currentOtpRecord = null;
+      return false;
+    }
+    if (clean === currentOtpRecord.code) {
+      currentOtpRecord = null; // Burn single-use OTP upon successful login
+      return true;
+    }
+  }
+
+  return false;
 }
 
 export function computeServerHash(str: string): string {

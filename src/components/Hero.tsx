@@ -14,20 +14,35 @@ import {
   Copy,
   Check,
   CheckCircle2,
+  Package,
+  ArrowRight,
 } from 'lucide-react';
 import { BANK_ACCOUNTS } from '../data/mockData';
+import { PageType } from './Navbar';
 
 interface HeroProps {
   onDownloadTrial: () => void;
-  onScrollToSection: (sectionId: string) => void;
+  onNavigateToPage?: (page: PageType) => void;
+  onScrollToSection?: (sectionId: string) => void;
   currency: 'NGN' | 'USD';
 }
 
 export const Hero: React.FC<HeroProps> = ({
   onDownloadTrial,
+  onNavigateToPage,
   onScrollToSection,
   currency,
 }) => {
+  const handleNav = (target: PageType | string) => {
+    if (onNavigateToPage) {
+      if (target === 'whatsapp-order' || target === 'order') onNavigateToPage('order');
+      else if (target === 'bank-details' || target === 'banks') onNavigateToPage('banks');
+      else if (target === 'editions' || target === 'plan') onNavigateToPage('plan');
+      else onNavigateToPage('tour');
+    } else if (onScrollToSection) {
+      onScrollToSection(target);
+    }
+  };
   const [activeTab, setActiveTab] = useState<'pos' | 'kds' | 'recipe' | 'sales'>('pos');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [copiedBank, setCopiedBank] = useState<string | null>(null);
@@ -118,7 +133,7 @@ export const Hero: React.FC<HeroProps> = ({
           </p>
 
           {/* Action CTAs */}
-          <div className="mt-5 sm:mt-6 flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 w-full max-w-lg mx-auto">
+          <div className="mt-5 sm:mt-6 flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 w-full max-w-2xl mx-auto">
             <button
               onClick={onDownloadTrial}
               className="w-full sm:w-auto px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 transition-all active:scale-95"
@@ -131,15 +146,23 @@ export const Hero: React.FC<HeroProps> = ({
             </button>
 
             <button
-              onClick={() => onScrollToSection('whatsapp-order')}
-              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-white hover:bg-slate-50 text-emerald-800 border border-emerald-400 font-bold text-sm flex items-center justify-center gap-2 shadow-2xs transition-all active:scale-95"
+              onClick={() => handleNav('plan')}
+              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-amber-600/20 transition-all active:scale-95"
             >
-              <MessageSquare className="w-4 h-4 text-emerald-600" />
-              <span>Order via WhatsApp</span>
+              <Package className="w-4 h-4" />
+              <span>Choose Hospitality Package</span>
             </button>
 
             <button
-              onClick={() => onScrollToSection('bank-details')}
+              onClick={() => handleNav('order')}
+              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-white hover:bg-slate-50 text-emerald-800 border border-emerald-400 font-bold text-sm flex items-center justify-center gap-2 shadow-2xs transition-all active:scale-95"
+            >
+              <MessageSquare className="w-4 h-4 text-emerald-600" />
+              <span>My Order</span>
+            </button>
+
+            <button
+              onClick={() => handleNav('banks')}
               className="w-full sm:w-auto px-4 py-3 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-sm flex items-center justify-center gap-2 shadow-2xs transition-all active:scale-95"
             >
               <CreditCard className="w-4 h-4 text-amber-600" />
@@ -162,11 +185,27 @@ export const Hero: React.FC<HeroProps> = ({
               </button>
 
               <button
-                onClick={() => onScrollToSection('whatsapp-order')}
+                onClick={() => handleNav('plan')}
+                className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-950 border border-amber-300 text-xs font-bold transition-all active:scale-95"
+              >
+                <Package className="w-3.5 h-3.5 text-amber-700" />
+                <span>📦 Packages</span>
+              </button>
+
+              <button
+                onClick={() => handleNav('order')}
                 className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border border-emerald-300 text-xs font-bold transition-all active:scale-95"
               >
                 <MessageSquare className="w-3.5 h-3.5 text-emerald-700" />
-                <span>💬 WhatsApp Sales</span>
+                <span>💬 My Order</span>
+              </button>
+
+              <button
+                onClick={() => handleNav('banks')}
+                className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 text-xs font-bold transition-all active:scale-95"
+              >
+                <CreditCard className="w-3.5 h-3.5 text-slate-600" />
+                <span>🏦 Bank Accounts</span>
               </button>
 
               <button
@@ -551,6 +590,28 @@ export const Hero: React.FC<HeroProps> = ({
               </div>
             )}
           </div>
+        </div>
+
+        {/* Next Page Transition Card to Choose Package */}
+        <div className="mt-8 p-5 sm:p-6 rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-600/10 border border-amber-300 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xs">
+          <div className="text-center sm:text-left">
+            <span className="text-[10px] font-black uppercase tracking-wider text-amber-900 bg-amber-200/80 px-2.5 py-0.5 rounded-full border border-amber-400">
+              Next Page
+            </span>
+            <h3 className="text-base sm:text-lg font-black text-slate-900 mt-1">
+              Choose Your Hospitality Package
+            </h3>
+            <p className="text-xs text-slate-600 font-medium max-w-xl">
+              Compare our 4 tailored POS packages with flexible duration options (1 Year, 3 Years, Lifetime) or download the 7-Day Free Evaluation build.
+            </p>
+          </div>
+          <button
+            onClick={() => handleNav('plan')}
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md shadow-orange-500/20 shrink-0 transition-all active:scale-95"
+          >
+            <span>Choose Package</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
         </div>
       </div>
     </section>

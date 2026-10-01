@@ -1,8 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { EditionType, DurationTier, CustomerRecord } from '../src/types';
-import { generateServerMasterKey } from './licenseService';
+import { EditionType, DurationTier, CustomerRecord } from '../src/types.ts';
+import { generateServerMasterKey } from './licenseService.ts';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,7 +15,7 @@ const INITIAL_SEEDS: CustomerRecord[] = [
     id: 'KYLX-REC-1001',
     customerName: 'Alhaji Musa Ibrahim',
     businessName: 'Arewa Palace Restaurant & Grills',
-    phone: '+234 802 334 1190',
+    phone: '234 806 0395 329',
     email: 'musa.ibrahim@arewapalace.ng',
     cityState: 'Wuse 2, Abuja',
     packageSubscribed: 'Enterprises Package',
@@ -37,7 +37,7 @@ const INITIAL_SEEDS: CustomerRecord[] = [
     id: 'KYLX-REC-1002',
     customerName: 'Chief Emeka Okonkwo',
     businessName: 'Native Pot Eateries Ltd',
-    phone: '+234 818 902 4471',
+    phone: '234 806 0395 329',
     email: 'emekapot@nativepoteatery.com',
     cityState: 'Victoria Island, Lagos',
     packageSubscribed: 'Standard Package',
@@ -59,7 +59,7 @@ const INITIAL_SEEDS: CustomerRecord[] = [
     id: 'KYLX-REC-1003',
     customerName: 'Mrs. Folake Adebayo',
     businessName: 'Iya Folake Buka & Grills',
-    phone: '+234 803 771 9920',
+    phone: '234 806 0395 329',
     email: 'folake.buka@gmail.com',
     cityState: 'Bodija, Ibadan',
     packageSubscribed: 'Basic Package',
@@ -81,7 +81,7 @@ const INITIAL_SEEDS: CustomerRecord[] = [
     id: 'KYLX-REC-1004',
     customerName: 'Capt. David Briggs',
     businessName: 'Creekview Seafood Lounge',
-    phone: '+234 809 112 5533',
+    phone: '234 806 0395 329',
     email: 'info@creekviewlounge.com',
     cityState: 'GRA Phase 2, Port Harcourt',
     packageSubscribed: 'Standard Package',
@@ -103,7 +103,7 @@ const INITIAL_SEEDS: CustomerRecord[] = [
     id: 'KYLX-REC-1005',
     customerName: 'Dr. Stella Onyeka',
     businessName: 'Sweet Tooth Cafe & Patisserie',
-    phone: '+234 805 443 8812',
+    phone: '234 806 0395 329',
     email: 'stella.onyeka@sweettooth.ng',
     cityState: 'Independence Layout, Enugu',
     packageSubscribed: 'Trial Edition',

@@ -1,12 +1,15 @@
 import React from 'react';
-import { UtensilsCrossed, Download, MessageSquare, PhoneCall, Smartphone, Monitor } from 'lucide-react';
+import { UtensilsCrossed, Download, MessageSquare, PhoneCall, Smartphone, Monitor, Package, Building2, Flame } from 'lucide-react';
 import { VENDOR_CONTACT } from '../data/mockData';
+
+export type PageType = 'tour' | 'plan' | 'banks' | 'order';
 
 interface NavbarProps {
   currency: 'NGN' | 'USD';
   setCurrency: (c: 'NGN' | 'USD') => void;
   onQuickDownloadTrial: () => void;
-  onScrollToSection: (sectionId: string) => void;
+  currentPage: PageType;
+  onNavigateToPage: (page: PageType) => void;
   isPhoneMode?: boolean;
   onTogglePhoneMode?: () => void;
 }
@@ -15,13 +18,14 @@ export const Navbar: React.FC<NavbarProps> = ({
   currency,
   setCurrency,
   onQuickDownloadTrial,
-  onScrollToSection,
+  currentPage,
+  onNavigateToPage,
   isPhoneMode = false,
   onTogglePhoneMode,
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs">
-      {/* Top Notification Bar (Hidden on compact phone view to maintain 15% sticky cap) */}
+      {/* Top Notification Bar */}
       <div className="hidden sm:block bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 text-white text-xs font-semibold py-1.5 px-4 text-center">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -49,7 +53,10 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Main Navbar */}
       <div className="max-w-5xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
         {/* Brand */}
-        <div className="flex items-center gap-2 sm:gap-2.5 cursor-pointer shrink-0" onClick={() => onScrollToSection('hero')}>
+        <div
+          className="flex items-center gap-2 sm:gap-2.5 cursor-pointer shrink-0"
+          onClick={() => onNavigateToPage('tour')}
+        >
           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-md shadow-orange-500/20 text-white ring-2 ring-amber-400/30">
             <UtensilsCrossed className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
           </div>
@@ -68,38 +75,54 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* Navigation Links (Desktop) */}
-        <nav className="hidden md:flex items-center gap-1 text-xs sm:text-sm font-semibold text-slate-700">
+        {/* Multi-Page Navigation Links (Desktop) */}
+        <nav className="hidden md:flex items-center gap-1.5 text-xs sm:text-sm font-semibold">
           <button
-            onClick={() => onScrollToSection('editions')}
-            className="px-3 py-1.5 rounded-lg hover:text-slate-950 hover:bg-slate-100 transition-colors"
+            onClick={() => onNavigateToPage('tour')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+              currentPage === 'tour'
+                ? 'bg-amber-100 text-amber-950 font-bold shadow-2xs'
+                : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
+            }`}
           >
-            Packages & Pricing
+            <Flame className="w-3.5 h-3.5 text-amber-600" />
+            <span>POS Tour</span>
           </button>
+
           <button
-            onClick={() => onScrollToSection('preview')}
-            className="px-3 py-1.5 rounded-lg hover:text-slate-950 hover:bg-slate-100 transition-colors"
+            onClick={() => onNavigateToPage('plan')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+              currentPage === 'plan'
+                ? 'bg-amber-100 text-amber-950 font-bold shadow-2xs'
+                : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
+            }`}
           >
-            Software Tour
+            <Package className="w-3.5 h-3.5 text-amber-600" />
+            <span>Choose Package</span>
           </button>
+
           <button
-            onClick={() => onScrollToSection('comparison')}
-            className="px-3 py-1.5 rounded-lg hover:text-slate-950 hover:bg-slate-100 transition-colors"
+            onClick={() => onNavigateToPage('banks')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+              currentPage === 'banks'
+                ? 'bg-amber-100 text-amber-950 font-bold shadow-2xs'
+                : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
+            }`}
           >
-            Features Matrix
+            <Building2 className="w-3.5 h-3.5 text-amber-600" />
+            <span>Bank Details</span>
           </button>
+
           <button
-            onClick={() => onScrollToSection('bank-details')}
-            className="px-3 py-1.5 rounded-lg hover:text-slate-950 hover:bg-slate-100 transition-colors"
-          >
-            Bank Details
-          </button>
-          <button
-            onClick={() => onScrollToSection('whatsapp-order')}
-            className="px-3 py-1.5 rounded-lg hover:text-emerald-800 hover:bg-emerald-50 transition-colors flex items-center gap-1.5 text-emerald-700 font-bold"
+            onClick={() => onNavigateToPage('order')}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-all ${
+              currentPage === 'order'
+                ? 'bg-emerald-600 text-white font-bold shadow-sm'
+                : 'text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50 font-bold'
+            }`}
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            WhatsApp Order
+            <span>My Order</span>
           </button>
         </nav>
 
@@ -115,12 +138,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               {isPhoneMode ? (
                 <>
                   <Monitor className="w-3.5 h-3.5 text-amber-600" />
-                  <span>Desktop Mode</span>
+                  <span>Desktop View</span>
                 </>
               ) : (
                 <>
                   <Smartphone className="w-3.5 h-3.5 text-amber-600" />
-                  <span>Phone Vibe Mode</span>
+                  <span>Phone Mode</span>
                 </>
               )}
             </button>
