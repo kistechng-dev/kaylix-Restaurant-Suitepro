@@ -219,7 +219,7 @@ export const BankDetailsSection: React.FC<BankDetailsSectionProps> = ({
               </div>
               <h4 className="font-extrabold text-slate-900">Select Package</h4>
               <p className="text-slate-700 leading-relaxed font-medium">
-                Choose Basic (₦10k), Standard (₦20k), or Enterprises (₦40k) for 1-Year, 3-Years, or Lifetime.
+                Choose Basic (1 POS + 2 Wireless), Standard, or Enterprises (₦250,000) with flexible license duration.
               </p>
             </div>
 

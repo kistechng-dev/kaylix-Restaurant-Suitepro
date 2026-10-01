@@ -114,26 +114,63 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({ edition, onClose }
           {/* Package Contents Checklist */}
           <div className="space-y-1.5 text-xs text-slate-700">
             <span className="text-[11px] font-bold text-slate-900 uppercase tracking-wider block">
-              Bundle Includes:
+              {edition.id === 'enterprise' ? 'Enterprise Flagship Bundle Includes:' : 'Bundle Includes:'}
             </span>
-            <div className="grid grid-cols-2 gap-2 text-[11px]">
-              <div className="flex items-center gap-1.5 text-emerald-700 font-medium">
-                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                <span>Kaylix Setup Launcher (.bat)</span>
+            {edition.id === 'enterprise' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] bg-purple-50/60 p-3 rounded-xl border border-purple-200">
+                <div className="flex items-center gap-1.5 text-purple-900 font-bold col-span-full">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-purple-700" />
+                  <span>START_HERE_KAYLIX_ENTERPRISE.html (1-Click Layman Runner)</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-slate-800 font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-700" />
+                  <span>Daily WhatsApp/Email Sales Digest</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-slate-800 font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-700" />
+                  <span>Central Cloud Multi-Branch Hub</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-slate-800 font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-700" />
+                  <span>Inter-Branch Stock Requisitions</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-slate-800 font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-700" />
+                  <span>Central Commissary Production</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-slate-800 font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-700" />
+                  <span>VIP Loyalty & SMS Marketing</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-slate-800 font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-700" />
+                  <span>Accounting CSV & API Sync</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-slate-800 font-medium col-span-full">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-700" />
+                  <span>Technical Support & Remote Deployment Desk</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 text-emerald-700 font-medium">
-                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                <span>QuickStart Manual (.txt)</span>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 text-[11px]">
+                <div className="flex items-center gap-1.5 text-emerald-700 font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                  <span>Kaylix Setup Launcher (.bat)</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-emerald-700 font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                  <span>QuickStart Manual (.txt)</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-emerald-700 font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                  <span>Sample Menu Template (.csv)</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-emerald-700 font-medium">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                  <span>Thermal ESC/POS Config</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 text-emerald-700 font-medium">
-                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                <span>Sample Menu Template (.csv)</span>
-              </div>
-              <div className="flex items-center gap-1.5 text-emerald-700 font-medium">
-                <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
-                <span>Thermal ESC/POS Config</span>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Default Credentials Notice */}

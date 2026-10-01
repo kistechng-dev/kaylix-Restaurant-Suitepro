@@ -1,8 +1,77 @@
 import JSZip from 'jszip';
 import { EditionDetail } from '../types';
 import { VENDOR_CONTACT } from '../data/mockData';
+import {
+  getEnterpriseHtmlApp,
+  getEnterpriseReadme,
+  getEnterpriseBatchScript,
+  getEnterpriseVbsScript,
+  getEnterpriseIniConfig,
+  getSampleRequisitionCsv,
+  getSampleCommissaryRecipesCsv,
+  getSampleVipLoyaltyCsv,
+  getSampleAccountingCsv,
+} from './enterprisePackageContent';
+
+export async function generateEnterprisePackage(): Promise<Blob> {
+  const zip = new JSZip();
+
+  // 1. One-Click Interactive Enterprise Suite (Layman-friendly offline application)
+  zip.file('START_HERE_KAYLIX_ENTERPRISE.html', getEnterpriseHtmlApp());
+
+  // 2. Windows 1-Click Launchers
+  zip.file('One_Click_Enterprise_Setup.bat', getEnterpriseBatchScript());
+  zip.file('One_Click_Enterprise_Setup.vbs', getEnterpriseVbsScript());
+
+  // 3. Novice & Layman Friendly Readme
+  zip.file('HOW_TO_RUN_FOR_NOVICES_README.txt', getEnterpriseReadme());
+  zip.file('Kaylix_Enterprise_QuickStart_Manual.txt', getEnterpriseReadme());
+
+  // 4. Enterprise Configuration File with all 7 modules
+  zip.file('config_enterprise.ini', getEnterpriseIniConfig());
+
+  // 5. Sample Data for all Enterprise Modules
+  zip.file('sample_branch_stock_requisitions.csv', getSampleRequisitionCsv());
+  zip.file('sample_commissary_recipes_yield.csv', getSampleCommissaryRecipesCsv());
+  zip.file('sample_vip_loyalty_members.csv', getSampleVipLoyaltyCsv());
+  zip.file('sample_accounting_quickbooks_sync.csv', getSampleAccountingCsv());
+
+  // 6. Master Eatery Menu CSV
+  const sampleMenuCsv = `Category,Item Name,Barcode,Cost Price (NGN),Selling Price (NGN),Printer Destination,Tax Rate (%)
+Rice & Grains,Smokey Party Jollof Rice with Fried Plantain,RICE-001,800,2500,Kitchen,7.5
+Rice & Grains,Special Fried Rice with Shrimps,RICE-002,1100,3200,Kitchen,7.5
+Rice & Grains,Basmati Coconut Rice & Grilled Chicken,RICE-003,1400,3800,Kitchen,7.5
+Soups & Swallows,Egusi Soup with Assorted Meat & Pounded Yam,SWL-001,1200,3500,Kitchen,7.5
+Soups & Swallows,Seafood Okro Soup with Fresh Fish,SWL-002,2200,5500,Kitchen,7.5
+Grills & Bites,Grilled Catfish Point & Kill (Full Fish),GRL-001,2800,6500,Kitchen,7.5
+Grills & Bites,Spicy Peppered Goat Meat (Asun Special),GRL-002,1500,3500,Kitchen,7.5
+Grills & Bites,Crispy Chicken Wings (6pcs) & Chips,GRL-003,1600,3800,Kitchen,7.5
+Drinks & Cocktails,Chapman Classic Mocktail with Cucumber,DRK-001,600,2000,Bar,7.5
+Drinks & Cocktails,Fresh Watermelon Pineapple Juice (500ml),DRK-002,500,1500,Bar,7.5
+Drinks & Cocktails,Heineken Beer Bottle 600ml,DRK-003,750,1500,Bar,7.5
+Drinks & Cocktails,Bottled Table Water 75cl,DRK-004,150,400,Bar,0.0
+`;
+  zip.file('sample_eatery_menu_template.csv', sampleMenuCsv);
+
+  // 7. Security verification and support desk
+  const licenseNote = `KAYLIX ENTERPRISE FLAGSHIP SUITE
+Package File: Kaylix_Kitchen_v3.4.2_Enterprise_Master.exe
+SHA-256 Checksum: 09bd47c94a286e11893f441029da6c1e9561b34a
+Edition: Enterprises Package (Omnichannel Flagship)
+Terminals: Unlimited Terminals + Central Cloud Hub
+All 7 Enterprise modules enabled and active.
+Vendor Support: ${VENDOR_CONTACT.whatsappDisplay} (${VENDOR_CONTACT.email})
+`;
+  zip.file('enterprise_license_verification.txt', licenseNote);
+
+  return await zip.generateAsync({ type: 'blob' });
+}
 
 export async function generateInstallerPackage(edition: EditionDetail): Promise<Blob> {
+  if (edition.id === 'enterprise') {
+    return await generateEnterprisePackage();
+  }
+
   const zip = new JSZip();
 
   // 1. Readme and Quickstart Manual

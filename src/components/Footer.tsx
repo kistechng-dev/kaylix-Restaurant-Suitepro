@@ -91,7 +91,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToPage, onScrollToSect
                 <strong className="text-slate-900">Trial Edition:</strong> 7-Day Free Full Pass
               </li>
               <li>
-                <strong className="text-slate-900">Basic Package:</strong> Single POS + 1 Wireless
+                <strong className="text-slate-900">Basic Package:</strong> 1 Standalone POS + 2 Wireless Terminals
               </li>
               <li>
                 <strong className="text-amber-800">Standard Package:</strong> Multi-User + KDS Pass

@@ -32,7 +32,7 @@ export const EditionsSection: React.FC<EditionsSectionProps> = ({
     trial: '7_days',
     basic: '1_year',
     standard: '1_year',
-    enterprise: '1_year',
+    enterprise: 'lifetime',
   });
 
   const [mobileSelectedEdition, setMobileSelectedEdition] = useState<EditionType>('standard');
