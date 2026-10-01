@@ -1,5 +1,5 @@
 import React from 'react';
-import { UtensilsCrossed, Download, MessageSquare, PhoneCall } from 'lucide-react';
+import { UtensilsCrossed, Download, MessageSquare, PhoneCall, Smartphone, Monitor } from 'lucide-react';
 import { VENDOR_CONTACT } from '../data/mockData';
 
 interface NavbarProps {
@@ -7,6 +7,8 @@ interface NavbarProps {
   setCurrency: (c: 'NGN' | 'USD') => void;
   onQuickDownloadTrial: () => void;
   onScrollToSection: (sectionId: string) => void;
+  isPhoneMode?: boolean;
+  onTogglePhoneMode?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -14,19 +16,21 @@ export const Navbar: React.FC<NavbarProps> = ({
   setCurrency,
   onQuickDownloadTrial,
   onScrollToSection,
+  isPhoneMode = false,
+  onTogglePhoneMode,
 }) => {
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-xs">
-      {/* Top Notification Bar */}
-      <div className="bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 text-white text-xs font-semibold py-1.5 px-4 text-center">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs">
+      {/* Top Notification Bar (Hidden on compact phone view to maintain 15% sticky cap) */}
+      <div className="hidden sm:block bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 text-white text-xs font-semibold py-1.5 px-4 text-center">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="hidden sm:flex items-center gap-2">
-            <span className="bg-white text-amber-800 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider shadow-xs">
+          <div className="flex items-center gap-2">
+            <span className="bg-white text-amber-800 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider shadow-2xs">
               Release v3.4.2
             </span>
-            <span className="font-medium text-white/95">Kaylix Kitchen & POS Suite • Offline-First</span>
+            <span className="font-medium text-white/95">Kaylix Kitchen & POS Suite • 100% Offline-First</span>
           </div>
-          <div className="flex items-center justify-center sm:justify-end w-full sm:w-auto gap-4 text-xs font-semibold">
+          <div className="flex items-center justify-end gap-4 text-xs font-semibold">
             <a
               href={`https://wa.me/${VENDOR_CONTACT.whatsappNumber.replace(/[^0-9]/g, '')}`}
               target="_blank"
@@ -43,28 +47,28 @@ export const Navbar: React.FC<NavbarProps> = ({
       </div>
 
       {/* Main Navbar */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 h-17 flex items-center justify-between">
+      <div className="max-w-5xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
         {/* Brand */}
-        <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => onScrollToSection('hero')}>
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-md shadow-orange-500/20 text-white ring-2 ring-amber-400/30">
-            <UtensilsCrossed className="w-5 h-5 stroke-[2.2]" />
+        <div className="flex items-center gap-2 sm:gap-2.5 cursor-pointer shrink-0" onClick={() => onScrollToSection('hero')}>
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-md shadow-orange-500/20 text-white ring-2 ring-amber-400/30">
+            <UtensilsCrossed className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.2]" />
           </div>
           <div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-lg font-black tracking-tight text-slate-900 font-sans">
+            <div className="flex items-center gap-1">
+              <span className="text-base sm:text-lg font-black tracking-tight text-slate-900 font-sans">
                 KAYLIX<span className="text-amber-600">.KITCHEN</span>
               </span>
-              <span className="text-[10px] font-extrabold px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300 uppercase tracking-wider">
+              <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300 uppercase tracking-wider">
                 POS
               </span>
             </div>
-            <p className="text-[11px] text-slate-600 font-semibold leading-none mt-0.5">
+            <p className="hidden sm:block text-[11px] text-slate-600 font-semibold leading-none mt-0.5">
               Kitchen & Eatery Management
             </p>
           </div>
         </div>
 
-        {/* Navigation Links */}
+        {/* Navigation Links (Desktop) */}
         <nav className="hidden md:flex items-center gap-1 text-xs sm:text-sm font-semibold text-slate-700">
           <button
             onClick={() => onScrollToSection('editions')}
@@ -100,14 +104,35 @@ export const Navbar: React.FC<NavbarProps> = ({
         </nav>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Desktop Phone Mode Toggle */}
+          {onTogglePhoneMode && (
+            <button
+              onClick={onTogglePhoneMode}
+              title={isPhoneMode ? 'Exit Phone Mode' : 'Preview Phone Version'}
+              className="hidden lg:flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all border border-slate-300 hover:border-amber-400 bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-900"
+            >
+              {isPhoneMode ? (
+                <>
+                  <Monitor className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Desktop Mode</span>
+                </>
+              ) : (
+                <>
+                  <Smartphone className="w-3.5 h-3.5 text-amber-600" />
+                  <span>Phone Vibe Mode</span>
+                </>
+              )}
+            </button>
+          )}
+
           {/* Currency Toggle */}
-          <div className="flex items-center bg-slate-100 border border-slate-300/80 rounded-lg p-0.5 text-xs font-bold">
+          <div className="flex items-center bg-slate-100 border border-slate-300/80 rounded-lg p-0.5 text-[11px] sm:text-xs font-bold">
             <button
               onClick={() => setCurrency('NGN')}
-              className={`px-2 py-1 rounded-md transition-all ${
+              className={`px-1.5 sm:px-2 py-1 rounded-md transition-all ${
                 currency === 'NGN'
-                  ? 'bg-white text-slate-900 shadow-xs font-black'
+                  ? 'bg-white text-slate-900 shadow-2xs font-black'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -115,9 +140,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
             <button
               onClick={() => setCurrency('USD')}
-              className={`px-2 py-1 rounded-md transition-all ${
+              className={`px-1.5 sm:px-2 py-1 rounded-md transition-all ${
                 currency === 'USD'
-                  ? 'bg-white text-slate-900 shadow-xs font-black'
+                  ? 'bg-white text-slate-900 shadow-2xs font-black'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -128,10 +153,11 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Quick Trial Download CTA */}
           <button
             onClick={onQuickDownloadTrial}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs sm:text-sm font-black shadow-md shadow-orange-500/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs sm:text-sm font-black shadow-md shadow-orange-500/20 transition-all active:scale-95 shrink-0"
           >
             <Download className="w-3.5 h-3.5 stroke-[2.8]" />
-            <span>7-Day Trial</span>
+            <span className="hidden xs:inline">7-Day</span>
+            <span>Trial</span>
           </button>
         </div>
       </div>
