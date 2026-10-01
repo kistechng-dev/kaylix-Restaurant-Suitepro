@@ -7,8 +7,6 @@ import {
   FileArchive,
   ShieldCheck,
   PhoneCall,
-  Copy,
-  Check,
 } from 'lucide-react';
 import { EditionDetail } from '../types';
 import { generateInstallerPackage, triggerDownload } from '../utils/installerDownload';
@@ -22,7 +20,6 @@ interface DownloadModalProps {
 export const DownloadModal: React.FC<DownloadModalProps> = ({ edition, onClose }) => {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isReady, setIsReady] = useState(false);
-  const [copiedHash, setCopiedHash] = useState(false);
 
   useEffect(() => {
     if (!edition) return;
@@ -53,12 +50,6 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({ edition, onClose }
   }, [edition]);
 
   if (!edition) return null;
-
-  const handleCopyChecksum = () => {
-    navigator.clipboard.writeText(edition.checksum);
-    setCopiedHash(true);
-    setTimeout(() => setCopiedHash(false), 2000);
-  };
 
   const handleRedownload = async () => {
     const blob = await generateInstallerPackage(edition);
@@ -117,19 +108,6 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({ edition, onClose }
             <div className="flex justify-between text-slate-600">
               <span>Estimated Size:</span>
               <span className="font-mono text-slate-800 font-semibold">{edition.fileSize}</span>
-            </div>
-            <div className="flex justify-between text-slate-600 items-center">
-              <span>SHA-256 Hash:</span>
-              <div className="flex items-center gap-1 font-mono text-[11px] text-amber-800 font-bold">
-                <span>{edition.checksum.slice(0, 14)}...</span>
-                <button
-                  onClick={handleCopyChecksum}
-                  className="hover:text-amber-900 p-0.5"
-                  title="Copy full hash"
-                >
-                  {copiedHash ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                </button>
-              </div>
             </div>
           </div>
 

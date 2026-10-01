@@ -1,15 +1,15 @@
 import React from 'react';
-import { UtensilsCrossed, PhoneCall, Mail, MapPin, ShieldCheck, Lock } from 'lucide-react';
+import { UtensilsCrossed, PhoneCall, Mail, MapPin, ShieldCheck } from 'lucide-react';
 import { VENDOR_CONTACT } from '../data/mockData';
 import { PageType } from './Navbar';
 
 interface FooterProps {
   onNavigateToPage?: (page: PageType) => void;
   onScrollToSection?: (sectionId: string) => void;
-  onOpenAdmin: () => void;
+  onOpenAdmin?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigateToPage, onScrollToSection, onOpenAdmin }) => {
+export const Footer: React.FC<FooterProps> = ({ onNavigateToPage, onScrollToSection }) => {
   const handleNav = (target: PageType | string) => {
     if (onNavigateToPage) {
       if (target === 'whatsapp-order' || target === 'order') onNavigateToPage('order');
@@ -144,15 +144,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToPage, onScrollToSect
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
               100% Genuine Software
             </span>
-            <span>•</span>
-            <button
-              onClick={onOpenAdmin}
-              className="text-slate-500 hover:text-slate-900 font-medium flex items-center gap-1 transition-colors"
-              title="Restricted Staff Admin Portal"
-            >
-              <Lock className="w-3 h-3" />
-              <span>Admin Portal</span>
-            </button>
           </div>
         </div>
       </div>

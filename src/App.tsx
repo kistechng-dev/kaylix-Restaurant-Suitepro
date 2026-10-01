@@ -81,7 +81,7 @@ export default function App() {
   };
 
   const handleQuickDownloadTrial = () => {
-    setDownloadModalEdition(EDITIONS.trial);
+    navigateToPage('plan');
   };
 
   const handleSelectForOrder = (editionId: EditionType, tier: DurationTier) => {
