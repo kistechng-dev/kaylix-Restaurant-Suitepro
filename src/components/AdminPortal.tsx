@@ -683,6 +683,15 @@ Reply to this message anytime!
                       <span>Open WhatsApp</span>
                     </a>
                   )}
+                  {smsTriggerUrl && (
+                    <a
+                      href={smsTriggerUrl}
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-slate-800 hover:text-slate-950 hover:underline"
+                    >
+                      <Send className="w-3 h-3 text-amber-700" />
+                      <span>Open SMS App</span>
+                    </a>
+                  )}
                   {generatedOtpCode && (
                     <button
                       type="button"
@@ -1650,7 +1659,7 @@ Reply to this message anytime!
                       <input
                         type="text"
                         required
-                        placeholder="+234 800 000 0000"
+                        placeholder="234 806 0395 329"
                         value={newCustomer.phone}
                         onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })}
                         className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-slate-900 focus:outline-none focus:border-amber-600"

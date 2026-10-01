@@ -1,5 +1,6 @@
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import {
@@ -310,20 +311,31 @@ app.get('/api/customers/export/csv', (req, res) => {
 
 // Full-Stack Server Integration with Vite
 async function startServer() {
-  if (process.env.NODE_ENV !== 'production') {
-    // In dev: mount vite.middlewares
+  const distDir = path.resolve(__dirname, 'dist');
+  const indexHtml = path.resolve(distDir, 'index.html');
+
+  // Check if compiled production build exists
+  if (process.env.NODE_ENV === 'production' && fs.existsSync(indexHtml)) {
+    console.log('[Server] Serving production static build from dist/');
+    app.use(express.static(distDir));
+    app.get('*', (req, res, next) => {
+      res.sendFile(indexHtml, (err) => {
+        if (err) next(err);
+      });
+    });
+  } else {
+    // In development OR if production was started without running build (e.g. Render default build command)
+    if (process.env.NODE_ENV === 'production') {
+      console.warn(
+        '[Server Notice] NODE_ENV=production but dist/index.html was not found. Mounting Vite middleware fallback so site remains fully accessible.'
+      );
+    }
     const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
     app.use(vite.middlewares);
-  } else {
-    // In production: serve static build
-    app.use(express.static(path.resolve(__dirname, 'dist')));
-    app.get('*', (req, res) => {
-      res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
-    });
   }
 
   app.listen(PORT, '0.0.0.0', () => {
