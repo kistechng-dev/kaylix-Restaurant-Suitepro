@@ -1,0 +1,220 @@
+{
+  "blackMarketRateNGN": 1620,
+  "autoSyncUSD": true,
+  "plans": {
+    "basic": {
+      "1_year": {
+        "priceNGN": 10000,
+        "priceUSD": 15
+      },
+      "3_years": {
+        "priceNGN": 28000,
+        "priceUSD": 38
+      },
+      "lifetime": {
+        "priceNGN": 60000,
+        "priceUSD": 80
+      }
+    },
+    "standard": {
+      "1_year": {
+        "priceNGN": 20000,
+        "priceUSD": 28
+      },
+      "3_years": {
+        "priceNGN": 57000,
+        "priceUSD": 75
+      },
+      "lifetime": {
+        "priceNGN": 100000,
+        "priceUSD": 135
+      }
+    },
+    "enterprise": {
+      "1_year": {
+        "priceNGN": 60000,
+        "priceUSD": 80
+      },
+      "3_years": {
+        "priceNGN": 150000,
+        "priceUSD": 200
+      },
+      "lifetime": {
+        "priceNGN": 250000,
+        "priceUSD": 330
+      }
+    }
+  },
+  "hardwareItems": [
+    {
+      "id": "thermal-printer-80mm",
+      "name": "80mm High-Speed Thermal Receipt & Kitchen Printer",
+      "category": "printer",
+      "priceNGN": 48000,
+      "priceUSD": 30,
+      "description": "Auto-cutter, USB + Ethernet LAN interface for kitchen ticket alerts, 260mm/s ultra fast.",
+      "specs": "Direct thermal, 80mm paper, LAN + USB, buzzer alert for new orders.",
+      "availability": "in_stock",
+      "badge": "Fast 260mm/s",
+      "isFeatured": true
+    },
+    {
+      "id": "barcode-scanner-2d",
+      "name": "Hands-Free 2D QR & Barcode Desktop Scanner",
+      "category": "scanner",
+      "priceNGN": 32000,
+      "priceUSD": 20,
+      "description": "Omnidirectional high-speed scanning for pre-packaged meals, drinks, and customer loyalty cards.",
+      "specs": "USB plug-and-play, scans phone screens & crinkled labels.",
+      "availability": "in_stock",
+      "badge": "Instant QR Scan"
+    },
+    {
+      "id": "cash-drawer-rj11",
+      "name": "Heavy-Duty 5-Bill Steel Cash Drawer",
+      "category": "drawer",
+      "priceNGN": 38000,
+      "priceUSD": 23,
+      "description": "Auto-kick RJ11 trigger connected to thermal printer, metal rollers, dual security keylock.",
+      "specs": "5 bill trays, 8 coin cups, 2 media slots for transfer receipts.",
+      "availability": "in_stock",
+      "badge": "Auto-Kick Metal"
+    },
+    {
+      "id": "touch-terminal-pos",
+      "name": "15.6\" All-in-One Commercial Touchscreen POS Terminal",
+      "category": "terminal",
+      "priceNGN": 240000,
+      "priceUSD": 148,
+      "description": "Industrial spill-resistant true-flat touchscreen PC, Intel Core processor, 8GB RAM, 128GB SSD.",
+      "specs": "Full HD 1080p, aluminium die-cast base, Windows 11 Pro pre-installed.",
+      "availability": "in_stock",
+      "badge": "Aluminium Die-Cast",
+      "isFeatured": true
+    },
+    {
+      "id": "waiter-tablet-10",
+      "name": "10.1\" Rugged Android Waiter Mobile Order Tablet",
+      "category": "tablet",
+      "priceNGN": 95000,
+      "priceUSD": 59,
+      "description": "Handheld tablet for table-side ordering with shockproof silicone bumper and hand-strap.",
+      "specs": "6000mAh all-day battery, Dual-band WiFi, 4GB RAM + 64GB storage.",
+      "availability": "in_stock",
+      "badge": "6000mAh Battery"
+    },
+    {
+      "id": "sunmi-v2-pro-4g",
+      "name": "Sunmi V2 Pro 4G Smart Handheld POS & Thermal Printer",
+      "category": "handheld",
+      "priceNGN": 165000,
+      "priceUSD": 102,
+      "description": "Next-gen wireless mobile POS with built-in 58mm Seiko printer, 4G LTE SIM slot, GPS, and NFC contactless.",
+      "specs": "5.5\" HD+ IPS screen, Android 13, 4G + WiFi, 2580mAh rechargeable battery.",
+      "availability": "in_stock",
+      "badge": "New 4G Technology",
+      "isFeatured": true
+    },
+    {
+      "id": "kds-screen-15",
+      "name": "15.6\" Commercial Kitchen Order Display Screen (KDS)",
+      "category": "display",
+      "priceNGN": 135000,
+      "priceUSD": 83,
+      "description": "Wall-mountable high-durability kitchen screen for cook order status, bump bar pass, and order timing.",
+      "specs": "Anti-grease coating, VESA mount, HDMI/LAN input, silent fanless cooling.",
+      "availability": "in_stock",
+      "badge": "Zero-Delay Kitchen Pass"
+    }
+  ],
+  "auditLog": [
+    {
+      "id": "LOG-1790963731968-271",
+      "timestamp": "2026-10-02T17:55:31.968Z",
+      "formattedDate": "02 Oct 2026, 06:55:31 pm WAT",
+      "username": "store_manager",
+      "role": "store_manager",
+      "staffName": "Central Warehouse & Store Manager",
+      "action": "price_update",
+      "summary": "Staff member Central Warehouse & Store Manager (@store_manager) logged in."
+    },
+    {
+      "id": "LOG-INIT-001",
+      "timestamp": "2026-10-01T17:55:18.487Z",
+      "formattedDate": "01 Oct 2026, 06:55:18 pm WAT",
+      "username": "admin",
+      "role": "admin",
+      "staffName": "Chief Systems Administrator",
+      "action": "price_update",
+      "summary": "Initialized official Naira pricing matrix pegged to Nigeria Parallel Market ($1 = ₦1,620)."
+    },
+    {
+      "id": "LOG-INIT-002",
+      "timestamp": "2026-10-02T05:55:18.534Z",
+      "formattedDate": "02 Oct 2026, 06:55:18 am WAT",
+      "username": "store_manager",
+      "role": "store_manager",
+      "staffName": "Central Warehouse & Store Manager",
+      "action": "hardware_added",
+      "summary": "Provisioned Sunmi V2 Pro 4G Handheld POS and 15.6\" KDS Display into active hardware inventory."
+    }
+  ],
+  "staffAccounts": [
+    {
+      "id": "STAFF-001",
+      "username": "admin",
+      "password": "Admin@Kaylix2026",
+      "name": "Chief Systems Administrator",
+      "role": "admin",
+      "phone": "234 806 0395 329",
+      "createdAt": "2026-10-01T08:00:00.000Z",
+      "isActive": true
+    },
+    {
+      "id": "STAFF-002",
+      "username": "store_manager",
+      "password": "Store@Kaylix2026",
+      "name": "Central Warehouse & Store Manager",
+      "role": "store_manager",
+      "phone": "234 806 0395 329",
+      "createdAt": "2026-10-01T08:00:00.000Z",
+      "isActive": true,
+      "lastLogin": "2026-10-02T17:55:31.967Z"
+    },
+    {
+      "id": "STAFF-003",
+      "username": "pricing_desk",
+      "password": "Desk@Kaylix2026",
+      "name": "Commercial Pricing & FX Officer",
+      "role": "pricing_officer",
+      "phone": "234 806 0395 329",
+      "createdAt": "2026-10-01T08:00:00.000Z",
+      "isActive": true
+    }
+  ],
+  "updatedAt": "2026-10-02T17:55:31.968Z",
+  "updatedBy": "Central Warehouse & Store Manager",
+  "updatedByRole": "store_manager",
+  "hardware": {
+    "thermal-printer-80mm": {
+      "priceNGN": 48000,
+      "priceUSD": 60
+    },
+    "barcode-scanner-2d": {
+      "priceNGN": 32000,
+      "priceUSD": 40
+    },
+    "cash-drawer-rj11": {
+      "priceNGN": 50000,
+      "priceUSD": 48
+    },
+    "touch-terminal-pos": {
+      "priceNGN": 500000,
+      "priceUSD": 300
+    },
+    "waiter-tablet-10": {
+      "priceNGN": 150000,
+      "priceUSD": 120
+    }
+  }
+}

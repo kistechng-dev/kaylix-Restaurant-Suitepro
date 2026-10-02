@@ -150,7 +150,7 @@ export const Hero: React.FC<HeroProps> = ({
               className="w-full sm:w-auto px-5 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-amber-600/20 transition-all active:scale-95"
             >
               <Package className="w-4 h-4" />
-              <span>Choose Hospitality Package</span>
+              <span>Choose Hospitality Plan</span>
             </button>
 
             <button
@@ -189,7 +189,7 @@ export const Hero: React.FC<HeroProps> = ({
                 className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-950 border border-amber-300 text-xs font-bold transition-all active:scale-95"
               >
                 <Package className="w-3.5 h-3.5 text-amber-700" />
-                <span>📦 Packages</span>
+                <span>📦 Plan Packages</span>
               </button>
 
               <button
@@ -599,17 +599,17 @@ export const Hero: React.FC<HeroProps> = ({
               Next Page
             </span>
             <h3 className="text-base sm:text-lg font-black text-slate-900 mt-1">
-              Choose Your Hospitality Package
+              Choose Your Plan Package
             </h3>
             <p className="text-xs text-slate-600 font-medium max-w-xl">
-              Compare our 4 tailored POS packages with flexible duration options (1 Year, 3 Years, Lifetime) or download the 7-Day Free Evaluation build.
+              Compare our 4 tailored POS plans with flexible duration options (1 Year, 3 Years, Lifetime) or download the 7-Day Free Evaluation build.
             </p>
           </div>
           <button
             onClick={() => handleNav('plan')}
             className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md shadow-orange-500/20 shrink-0 transition-all active:scale-95"
           >
-            <span>Choose Package</span>
+            <span>Choose Plan</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

@@ -217,9 +217,9 @@ export const BankDetailsSection: React.FC<BankDetailsSectionProps> = ({
               <div className="w-7 h-7 rounded-full bg-amber-500 text-white font-black flex items-center justify-center text-xs shadow-2xs">
                 1
               </div>
-              <h4 className="font-extrabold text-slate-900">Select Package</h4>
+              <h4 className="font-extrabold text-slate-900">Select Plan</h4>
               <p className="text-slate-700 leading-relaxed font-medium">
-                Choose Basic (1 POS + 2 Wireless), Standard, or Enterprises (₦250,000) with flexible license duration.
+                Choose Basic Plan (1 POS + 2 Wireless), Standard Plan, or Enterprises Plan (₦250,000) with flexible license duration.
               </p>
             </div>
 

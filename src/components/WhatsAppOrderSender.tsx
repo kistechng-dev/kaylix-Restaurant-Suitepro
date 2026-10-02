@@ -15,8 +15,9 @@ import {
   ExternalLink,
   CheckCircle2,
 } from 'lucide-react';
-import { EditionType, DurationTier, OrderFormData } from '../types';
-import { EDITIONS, HARDWARE_ADDONS, VENDOR_CONTACT } from '../data/mockData';
+import { EditionType, DurationTier, OrderFormData, EditionDetail, HardwareAddon } from '../types';
+import { VENDOR_CONTACT } from '../data/mockData';
+import { getEffectiveEditions, getEffectiveHardware } from '../utils/pricingStorage';
 
 interface WhatsAppOrderSenderProps {
   initialEdition: EditionType;
@@ -29,6 +30,17 @@ export const WhatsAppOrderSender: React.FC<WhatsAppOrderSenderProps> = ({
   initialTier = '1_year',
   currency,
 }) => {
+  const [editionsMap, setEditionsMap] = useState<Record<string, EditionDetail>>(getEffectiveEditions);
+  const [hardwareList, setHardwareList] = useState<HardwareAddon[]>(getEffectiveHardware);
+
+  useEffect(() => {
+    const handlePriceUpdate = () => {
+      setEditionsMap(getEffectiveEditions());
+      setHardwareList(getEffectiveHardware());
+    };
+    window.addEventListener('kaylix_pricing_updated', handlePriceUpdate);
+    return () => window.removeEventListener('kaylix_pricing_updated', handlePriceUpdate);
+  }, []);
   const [formData, setFormData] = useState<OrderFormData>({
     customerName: '',
     businessName: '',
@@ -99,7 +111,7 @@ export const WhatsAppOrderSender: React.FC<WhatsAppOrderSenderProps> = ({
     });
   };
 
-  const selectedEditionDetail = EDITIONS[formData.edition] || EDITIONS.standard;
+  const selectedEditionDetail = editionsMap[formData.edition] || editionsMap.standard;
   const currentPlan =
     selectedEditionDetail.plans[formData.durationTier] ||
     Object.values(selectedEditionDetail.plans)[0];
@@ -109,7 +121,7 @@ export const WhatsAppOrderSender: React.FC<WhatsAppOrderSenderProps> = ({
     currency === 'NGN' ? currentPlan.priceNGN : currentPlan.priceUSD;
 
   const hardwareCost = formData.selectedAddons.reduce((acc, id) => {
-    const addon = HARDWARE_ADDONS.find((a) => a.id === id);
+    const addon = hardwareList.find((a) => a.id === id);
     if (!addon) return acc;
     return acc + (currency === 'NGN' ? addon.priceNGN : addon.priceUSD);
   }, 0);
@@ -123,7 +135,7 @@ export const WhatsAppOrderSender: React.FC<WhatsAppOrderSenderProps> = ({
       formData.selectedAddons.length > 0
         ? formData.selectedAddons
             .map((id) => {
-              const item = HARDWARE_ADDONS.find((a) => a.id === id);
+              const item = hardwareList.find((a) => a.id === id);
               if (!item) return '';
               const cost =
                 currency === 'NGN'
@@ -372,14 +384,14 @@ Please send payment confirmation and issue license key details. Thank you!`;
                 </div>
               </div>
 
-              {/* Package Selector */}
+              {/* Plan Package Selector */}
               <div>
                 <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
-                  1. Select Software Package:
+                  1. Select Plan Package:
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {(['trial', 'basic', 'standard', 'enterprise'] as EditionType[]).map((edId) => {
-                    const item = EDITIONS[edId];
+                    const item = editionsMap[edId];
                     const isSelected = formData.edition === edId;
 
                     return (
@@ -466,9 +478,10 @@ Please send payment confirmation and issue license key details. Thank you!`;
                 <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
                   3. Optional POS Hardware Add-ons:
                 </label>
-                <div className="space-y-1.5">
-                  {HARDWARE_ADDONS.map((addon) => {
+                <div className="space-y-2">
+                  {hardwareList.map((addon) => {
                     const isChecked = formData.selectedAddons.includes(addon.id);
+                    const isOutOfStock = addon.availability === 'out_of_stock';
                     const priceStr =
                       currency === 'NGN'
                         ? `₦${addon.priceNGN.toLocaleString()}`
@@ -477,26 +490,58 @@ Please send payment confirmation and issue license key details. Thank you!`;
                     return (
                       <label
                         key={addon.id}
-                        className={`flex items-start gap-2.5 p-2.5 rounded-xl border cursor-pointer transition-all ${
-                          isChecked
-                            ? 'bg-amber-50/70 border-amber-400 ring-1 ring-amber-300'
-                            : 'bg-white border-slate-300 hover:border-slate-400'
+                        className={`flex items-start gap-2.5 p-3 rounded-xl border transition-all ${
+                          isOutOfStock
+                            ? 'bg-slate-100/80 border-slate-200 opacity-60 cursor-not-allowed'
+                            : isChecked
+                            ? 'bg-amber-50/80 border-amber-400 ring-1 ring-amber-300 cursor-pointer shadow-2xs'
+                            : 'bg-white border-slate-300 hover:border-slate-400 cursor-pointer'
                         }`}
                       >
                         <input
                           type="checkbox"
+                          disabled={isOutOfStock}
                           checked={isChecked}
-                          onChange={() => toggleAddon(addon.id)}
-                          className="mt-0.5 rounded bg-white border-slate-300 text-amber-600 focus:ring-amber-500 w-4 h-4"
+                          onChange={() => !isOutOfStock && toggleAddon(addon.id)}
+                          className="mt-0.5 rounded bg-white border-slate-300 text-amber-600 focus:ring-amber-500 w-4 h-4 disabled:opacity-40"
                         />
                         <div className="flex-1">
-                          <div className="flex items-baseline justify-between gap-1">
-                            <span className="text-xs font-bold text-slate-900">{addon.name}</span>
+                          <div className="flex flex-wrap items-center justify-between gap-1.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-xs font-black text-slate-900">{addon.name}</span>
+                              {addon.badge && (
+                                <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-200">
+                                  {addon.badge}
+                                </span>
+                              )}
+                              {addon.availability === 'pre_order' && (
+                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
+                                  Pre-Order
+                                </span>
+                              )}
+                              {addon.availability === 'low_stock' && (
+                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
+                                  Low Stock
+                                </span>
+                              )}
+                              {isOutOfStock && (
+                                <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-800">
+                                  Out of Stock
+                                </span>
+                              )}
+                            </div>
                             <span className="text-xs font-mono font-black text-amber-800 shrink-0">
                               +{priceStr}
                             </span>
                           </div>
-                          <p className="text-[11px] text-slate-600 font-medium leading-tight mt-0.5">{addon.description}</p>
+                          <p className="text-[11px] text-slate-600 font-medium leading-tight mt-1">
+                            {addon.description}
+                          </p>
+                          {addon.specs && (
+                            <span className="text-[10px] text-slate-500 font-mono block mt-0.5">
+                              {addon.specs}
+                            </span>
+                          )}
                         </div>
                       </label>
                     );
@@ -603,7 +648,7 @@ Please send payment confirmation and issue license key details. Thank you!`;
               <div className="space-y-1.5 text-xs">
                 <div className="flex justify-between text-slate-700 font-medium">
                   <span>
-                    Package ({selectedEditionDetail.name}):
+                    Plan Package ({selectedEditionDetail.name}):
                   </span>
                   <span className="font-mono font-bold text-slate-900">
                     {formData.edition === 'trial'

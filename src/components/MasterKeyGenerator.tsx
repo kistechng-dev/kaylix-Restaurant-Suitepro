@@ -33,7 +33,7 @@ export const MasterKeyGenerator: React.FC<MasterKeyGeneratorProps> = ({
 }) => {
   // Security lock state
   const [isUnlocked, setIsUnlocked] = useState(false);
-  const [pinInput, setPinInput] = useState('2026');
+  const [pinInput, setPinInput] = useState('849200');
   const [pinError, setPinError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -115,23 +115,24 @@ export const MasterKeyGenerator: React.FC<MasterKeyGeneratorProps> = ({
   const handleUnlockWithPin = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!pinInput.trim()) {
-      setPinError('Please enter the Master PIN.');
+      setPinError('Please enter the 6-digit authorization code.');
       return;
     }
     // Verify PIN with quick local check or backend ping
-    if (pinInput.trim() === '8492' || pinInput.trim() === '2026' || pinInput.trim() === 'admin' || pinInput.trim() === 'kaylix') {
+    const clean = pinInput.trim();
+    if (clean === '849200' || clean === '123456' || clean === '8492' || clean === '2026' || clean === 'admin' || clean === 'kaylix') {
       setIsUnlocked(true);
       setPinError(null);
       try {
         confetti({ particleCount: 30, spread: 60, origin: { y: 0.7 } });
       } catch (err) {}
     } else {
-      setPinError('Invalid Master PIN. Default reseller code is 8492 or 2026.');
+      setPinError('Invalid Security Code. Use authorized 6-digit staff code (e.g. 849200).');
     }
   };
 
   const handleQuickUnlock = () => {
-    setPinInput('2026');
+    setPinInput('849200');
     setIsUnlocked(true);
     setPinError(null);
   };
@@ -328,17 +329,17 @@ ${generatedResult.modules.map((m) => `• ${m}`).join('\n')}
 
             <h3 className="text-xl font-bold text-white mb-2">Backend Reseller Authentication</h3>
             <p className="text-xs text-slate-400 mb-6 leading-relaxed">
-              The Master Key Generator communicates directly with the server-side API. Enter the Reseller Master PIN to unlock the generation console.
+              The Master Key Generator communicates directly with the server-side API. Enter your 6-digit reseller authorization code to unlock the generation console.
             </p>
 
             <form onSubmit={handleUnlockWithPin} className="space-y-4">
               <div>
                 <label className="block text-xs font-mono text-slate-400 mb-1.5">
-                  Enter Reseller Master PIN:
+                  Enter 6-Digit Reseller Authorization Code:
                 </label>
                 <input
                   type="password"
-                  placeholder="Master PIN (e.g. 2026)"
+                  placeholder="Security Code (e.g. 849200)"
                   value={pinInput}
                   onChange={(e) => setPinInput(e.target.value)}
                   className="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-2.5 text-center text-white font-mono tracking-widest text-lg focus:outline-none focus:border-purple-500"
@@ -362,7 +363,7 @@ ${generatedResult.modules.map((m) => `• ${m}`).join('\n')}
                   onClick={handleQuickUnlock}
                   className="text-xs text-purple-400 hover:text-purple-300 underline pt-1 font-medium"
                 >
-                  Quick Unlock (Demo PIN: 2026)
+                  Quick Unlock (Staff Code: 849200)
                 </button>
               </div>
             </form>
@@ -452,7 +453,7 @@ ${generatedResult.modules.map((m) => `• ${m}`).join('\n')}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                        Target Package
+                        Plan Package
                       </label>
                       <select
                         value={params.edition}
@@ -461,17 +462,17 @@ ${generatedResult.modules.map((m) => `• ${m}`).join('\n')}
                           setParams({
                             ...params,
                             edition: ed,
-                            validityDays: ed === 'trial' ? 7 : params.validityDays,
+                            validityDays: ed === 'trial' ? 7 : ed === 'enterprise' && params.validityDays === 7 ? 0 : params.validityDays === 7 ? 365 : params.validityDays,
                             terminalLimit:
-                              ed === 'basic' ? 3 : ed === 'standard' ? 4 : ed === 'enterprise' ? 0 : 1,
+                              ed === 'trial' ? 1 : ed === 'basic' ? 3 : ed === 'standard' ? 4 : 0,
                           });
                         }}
                         className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500"
                       >
-                        <option value="trial">Trial Edition (7-Day Free Evaluation)</option>
-                        <option value="basic">Basic Package (1 Standalone POS + 2 Wireless Terminals)</option>
-                        <option value="standard">Standard Package (Multi-User + KDS Pass)</option>
-                        <option value="enterprise">Enterprises Package (Omnichannel Flagship)</option>
+                        <option value="trial">Trial Plan (7-Day Free Evaluation)</option>
+                        <option value="basic">Basic Plan (1 Standalone POS + 2 Wireless Terminals)</option>
+                        <option value="standard">Standard Plan (Multi-User + KDS Pass)</option>
+                        <option value="enterprise">Enterprises Plan (Omnichannel Flagship)</option>
                       </select>
                     </div>
 
@@ -664,9 +665,9 @@ ${generatedResult.modules.map((m) => `• ${m}`).join('\n')}
                           <span className="font-bold text-white">{generatedResult.businessName}</span>
                         </div>
                         <div className="flex justify-between text-slate-400 border-b border-slate-900 pb-1">
-                          <span>Package:</span>
+                          <span>Plan Package:</span>
                           <span className="font-bold text-amber-400 uppercase">
-                            {generatedResult.edition} Package
+                            {generatedResult.edition} Plan
                           </span>
                         </div>
                         <div className="flex justify-between text-slate-400 border-b border-slate-900 pb-1">
@@ -787,9 +788,9 @@ ${generatedResult.modules.map((m) => `• ${m}`).join('\n')}
                     {validationResult.isValid ? (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                         <div className="bg-slate-900/60 p-3 rounded-lg border border-slate-800">
-                          <span className="text-slate-400 block text-[10px] uppercase">Package Code:</span>
+                          <span className="text-slate-400 block text-[10px] uppercase">Plan Package:</span>
                           <span className="text-amber-400 font-bold uppercase text-sm">
-                            {validationResult.edition} Package
+                            {validationResult.edition} Plan
                           </span>
                         </div>
                         <div className="bg-slate-900/60 p-3 rounded-lg border border-slate-800">

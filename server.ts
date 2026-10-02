@@ -19,6 +19,14 @@ import {
   generateLicenseForExistingCustomer,
   exportDatabaseCsv,
 } from './server/customerDatabase.ts';
+import {
+  getPricingConfig,
+  updatePricingConfig,
+  resetPricingConfig,
+  verifyStaffCredentials,
+  createStaffAccount,
+  exportAuditLogCsv,
+} from './server/pricingDatabase.ts';
 
 dotenv.config();
 
@@ -309,6 +317,114 @@ app.get('/api/customers/export/csv', (req, res) => {
   }
 });
 
+// GET /api/pricing - Get current official plans and hardware pricing
+app.get('/api/pricing', (req, res) => {
+  try {
+    const pricing = getPricingConfig();
+    res.json({ success: true, pricing });
+  } catch (error: any) {
+    console.error('Get pricing error:', error);
+    res.status(500).json({ success: false, error: 'Failed to fetch pricing configuration' });
+  }
+});
+
+// POST /api/pricing/auth - Staff & Store Manager Login with username & password
+app.post('/api/pricing/auth', (req, res) => {
+  try {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ success: false, error: 'Username and password are required' });
+    }
+    const staff = verifyStaffCredentials(username, password);
+    if (!staff) {
+      return res.status(401).json({ success: false, error: 'Invalid username or password' });
+    }
+    res.json({
+      success: true,
+      message: `Welcome, ${staff.name}`,
+      user: {
+        id: staff.id,
+        username: staff.username,
+        name: staff.name,
+        role: staff.role,
+        phone: staff.phone,
+      },
+    });
+  } catch (error: any) {
+    console.error('Staff auth error:', error);
+    res.status(500).json({ success: false, error: 'Staff authentication failed' });
+  }
+});
+
+// POST /api/pricing/staff - Admin creates a new staff/store account
+app.post('/api/pricing/staff', (req, res) => {
+  try {
+    const { newStaff, adminSession } = req.body;
+    if (!newStaff || !newStaff.username || !newStaff.password || !newStaff.name) {
+      return res.status(400).json({ success: false, error: 'Complete staff details required' });
+    }
+    const created = createStaffAccount(newStaff, adminSession);
+    const updatedPricing = getPricingConfig();
+    res.json({
+      success: true,
+      message: `Staff account ${created.name} (@${created.username}) created.`,
+      staff: created,
+      pricing: updatedPricing,
+    });
+  } catch (error: any) {
+    console.error('Create staff error:', error);
+    res.status(500).json({ success: false, error: 'Failed to create staff account' });
+  }
+});
+
+// POST /api/pricing - Update plans and hardware pricing by admin or store manager
+app.post('/api/pricing', (req, res) => {
+  try {
+    const { pricing, userSession, actionType, actionSummary } = req.body;
+    if (!pricing) {
+      return res.status(400).json({ success: false, error: 'No pricing payload provided' });
+    }
+    const updated = updatePricingConfig(pricing, userSession, actionType, actionSummary);
+    res.json({
+      success: true,
+      message: 'Plans and hardware pricing updated successfully.',
+      pricing: updated,
+    });
+  } catch (error: any) {
+    console.error('Update pricing error:', error);
+    res.status(500).json({ success: false, error: 'Failed to update pricing configuration' });
+  }
+});
+
+// POST /api/pricing/reset - Reset pricing to factory default values
+app.post('/api/pricing/reset', (req, res) => {
+  try {
+    const { adminSession } = req.body;
+    const reset = resetPricingConfig(adminSession);
+    res.json({
+      success: true,
+      message: 'Pricing restored to factory default matrix.',
+      pricing: reset,
+    });
+  } catch (error: any) {
+    console.error('Reset pricing error:', error);
+    res.status(500).json({ success: false, error: 'Failed to reset pricing' });
+  }
+});
+
+// GET /api/pricing/audit/csv - Download pricing audit history CSV
+app.get('/api/pricing/audit/csv', (req, res) => {
+  try {
+    const csv = exportAuditLogCsv();
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="Kaylix_Pricing_Audit_Log.csv"');
+    res.send(csv);
+  } catch (error: any) {
+    console.error('Export audit log error:', error);
+    res.status(500).json({ success: false, error: 'Failed to export pricing audit log' });
+  }
+});
+
 // GET /api/download/enterprise-package - One-Click Novice Enterprise Package (.zip)
 app.get(['/api/download/enterprise-package', '/download/enterprise-package.zip'], async (req, res) => {
   try {
@@ -353,7 +469,7 @@ Drinks & Cocktails,Bottled Table Water 75cl,DRK-004,150,400,Bar,0.0
     zip.file('enterprise_license_verification.txt', `KAYLIX ENTERPRISE FLAGSHIP SUITE
 Package File: Kaylix_Kitchen_v3.4.2_Enterprise_Master.exe
 SHA-256 Checksum: 09bd47c94a286e11893f441029da6c1e9561b34a
-Edition: Enterprises Package (Omnichannel Flagship)
+Edition: Enterprises Plan (Omnichannel Flagship)
 Terminals: Unlimited Terminals + Central Cloud Hub
 All 7 Enterprise modules enabled and active.
 `);

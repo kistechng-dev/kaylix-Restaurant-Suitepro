@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Download,
   MessageSquare,
@@ -11,9 +11,10 @@ import {
   Calendar,
   Layers,
   ArrowRight,
+  TrendingUp,
 } from 'lucide-react';
 import { EditionDetail, EditionType, DurationTier } from '../types';
-import { EDITIONS } from '../data/mockData';
+import { getEffectiveEditions, getCustomPricing } from '../utils/pricingStorage';
 
 interface EditionsSectionProps {
   currency: 'NGN' | 'USD';
@@ -26,7 +27,19 @@ export const EditionsSection: React.FC<EditionsSectionProps> = ({
   onDownloadEdition,
   onSelectForOrder,
 }) => {
-  const editionsList = Object.values(EDITIONS);
+  const [editionsMap, setEditionsMap] = useState<Record<string, EditionDetail>>(getEffectiveEditions);
+  const [pricingConfig, setPricingConfig] = useState(getCustomPricing);
+
+  useEffect(() => {
+    const handlePriceUpdate = () => {
+      setEditionsMap(getEffectiveEditions());
+      setPricingConfig(getCustomPricing());
+    };
+    window.addEventListener('kaylix_pricing_updated', handlePriceUpdate);
+    return () => window.removeEventListener('kaylix_pricing_updated', handlePriceUpdate);
+  }, []);
+
+  const editionsList = Object.values(editionsMap);
 
   const [selectedTiers, setSelectedTiers] = useState<Record<string, DurationTier>>({
     trial: '7_days',
@@ -246,12 +259,21 @@ export const EditionsSection: React.FC<EditionsSectionProps> = ({
             Transparent Pricing & Licenses
           </div>
           <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            Choose Your Hospitality Package
+            Choose Your Plan Package
           </h2>
           <p className="mt-2 text-slate-700 font-medium text-xs sm:text-sm leading-relaxed">
             Select between 1 Year, 3 Years, or Lifetime perpetual licenses.
-            All editions operate 100% offline with zero cloud outage vulnerability.
+            All plans operate 100% offline with zero cloud outage vulnerability.
           </p>
+
+          {currency === 'USD' && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 mt-3 rounded-full text-xs font-bold bg-emerald-50 text-emerald-900 border border-emerald-300">
+              <TrendingUp className="w-3.5 h-3.5 text-emerald-700" />
+              <span>
+                Auto-converted at Nigeria Parallel / Black Market rate: $1 USD ≈ ₦{pricingConfig.blackMarketRateNGN?.toLocaleString() || '1,620'}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* MOBILE VIEW: Segmented Switcher (< md:) */}
@@ -273,7 +295,7 @@ export const EditionsSection: React.FC<EditionsSectionProps> = ({
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
-                  {ed.id === 'trial' ? '⚡ Trial' : ed.id === 'basic' ? 'Basic' : ed.id === 'standard' ? '⭐ Standard' : 'Enterprise'}
+                  {ed.id === 'trial' ? '⚡ Trial' : ed.id === 'basic' ? 'Basic' : ed.id === 'standard' ? '⭐ Standard' : 'Enterprises'}
                 </button>
               );
             })}
@@ -285,7 +307,7 @@ export const EditionsSection: React.FC<EditionsSectionProps> = ({
               onClick={() => setMobileShowAll(!mobileShowAll)}
               className="text-xs font-bold text-amber-700 hover:text-amber-800 underline flex items-center gap-1"
             >
-              {mobileShowAll ? 'Show Single Swiper View' : 'Compare All 4 Packages Stacked'}
+              {mobileShowAll ? 'Show Single Swiper View' : 'Compare All 4 Plans Stacked'}
             </button>
           </div>
 
@@ -296,7 +318,7 @@ export const EditionsSection: React.FC<EditionsSectionProps> = ({
             </div>
           ) : (
             <div>
-              {renderEditionCard(EDITIONS[mobileSelectedEdition], true)}
+              {renderEditionCard(editionsMap[mobileSelectedEdition] || editionsMap.standard, true)}
             </div>
           )}
         </div>

@@ -57,7 +57,7 @@ Drinks & Cocktails,Bottled Table Water 75cl,DRK-004,150,400,Bar,0.0
   const licenseNote = `KAYLIX ENTERPRISE FLAGSHIP SUITE
 Package File: Kaylix_Kitchen_v3.4.2_Enterprise_Master.exe
 SHA-256 Checksum: 09bd47c94a286e11893f441029da6c1e9561b34a
-Edition: Enterprises Package (Omnichannel Flagship)
+Edition: Enterprises Plan (Omnichannel Flagship)
 Terminals: Unlimited Terminals + Central Cloud Hub
 All 7 Enterprise modules enabled and active.
 Vendor Support: ${VENDOR_CONTACT.whatsappDisplay} (${VENDOR_CONTACT.email})
@@ -112,7 +112,7 @@ Step 4: Connect your 80mm Thermal Receipt printer via USB. The driver auto-detec
 Step 5: Launch Kaylix Kitchen from the Desktop icon.
 Step 6: Login with Default Super-Admin Credentials:
         Username: admin
-        Default PIN: 1234
+        Default Staff PIN: 123456
         (Please change your PIN immediately under Settings -> Security)
 
 --------------------------------------------------------------------------------

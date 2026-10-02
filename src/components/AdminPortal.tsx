@@ -36,7 +36,9 @@ import {
   Clock,
   Eye,
   CreditCard,
+  BadgeDollarSign,
 } from 'lucide-react';
+import { AdminPricingManager } from './AdminPricingManager';
 import { EditionType, DurationTier, LicenseParams, GeneratedLicense, LicenseValidationResult, CustomerRecord } from '../types';
 import { formatLicenseCertificate, generateHWID } from '../utils/licenseGenerator';
 import { VENDOR_CONTACT } from '../data/mockData';
@@ -63,7 +65,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToPublic }) => {
   const [smsTriggerUrl, setSmsTriggerUrl] = useState<string | null>(null);
 
   // Active view tab in admin: database is now the primary view
-  const [activeTab, setActiveTab] = useState<'database' | 'generate' | 'validate' | 'batch' | 'health'>('database');
+  const [activeTab, setActiveTab] = useState<'database' | 'pricing' | 'generate' | 'validate' | 'batch' | 'health'>('database');
 
   // ==========================================
   // CUSTOMER DATABASE STATE
@@ -84,7 +86,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToPublic }) => {
     phone: '',
     email: '',
     cityState: '',
-    packageSubscribed: 'Standard Package',
+    packageSubscribed: 'Standard Plan',
     edition: 'standard' as EditionType,
     durationTier: '1_year' as DurationTier,
     tenureLabel: '1 Year License',
@@ -97,12 +99,28 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToPublic }) => {
   // ==========================================
   // MASTER KEY GENERATOR STATE
   // ==========================================
+  // Helper to get default terminals based on plan
+  const getDefaultTerminalsForPlan = (plan: EditionType): number => {
+    switch (plan) {
+      case 'trial':
+        return 1;
+      case 'basic':
+        return 3; // 1 Standalone Counter POS + 2 Wireless Handheld Terminals
+      case 'standard':
+        return 4; // Multi-User Counter + Waiter Tablet + KDS Pass
+      case 'enterprise':
+        return 0; // 0 = Unlimited Omnichannel Flagship Fleet
+      default:
+        return 3;
+    }
+  };
+
   const [params, setParams] = useState<LicenseParams>({
     businessName: "Mama's Delight Kitchen & Lounge",
     edition: 'standard',
     hwid: 'KYLX-HW-8492-7A11',
     validityDays: 365,
-    terminalLimit: 3,
+    terminalLimit: 4,
     modules: {
       posTerminal: true,
       kitchenDisplay: true,
@@ -115,6 +133,44 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToPublic }) => {
     resellerName: 'Kaylix Technology (Official Backend Root)',
     notes: 'Authorized Single-Venue Deployment',
   });
+
+  // Automatically update terminals and defaults when Plan Package changes
+  const handlePlanChange = (selectedPlan: EditionType) => {
+    const defaultTerminals = getDefaultTerminalsForPlan(selectedPlan);
+    let defaultValidity = params.validityDays;
+
+    if (selectedPlan === 'trial') {
+      defaultValidity = 7;
+    } else if (params.validityDays === 7) {
+      defaultValidity = selectedPlan === 'enterprise' ? 0 : 365;
+    }
+
+    setParams((prev) => ({
+      ...prev,
+      edition: selectedPlan,
+      validityDays: defaultValidity,
+      terminalLimit: defaultTerminals,
+      modules: {
+        posTerminal: true,
+        kitchenDisplay: selectedPlan !== 'basic' && selectedPlan !== 'trial',
+        recipeCosting: selectedPlan !== 'basic' && selectedPlan !== 'trial',
+        waiterApp: selectedPlan === 'standard' || selectedPlan === 'enterprise',
+        multiBranch: selectedPlan === 'enterprise',
+        cloudSync: selectedPlan === 'enterprise',
+        smsWhatsappAlerts: selectedPlan !== 'trial',
+      },
+    }));
+  };
+
+  // Handle tenure change
+  const handleTenureChange = (days: number) => {
+    setParams((prev) => ({
+      ...prev,
+      validityDays: days,
+      // If switching to trial tenure, ensure terminal quota matches trial unless altered
+      terminalLimit: days === 7 && prev.edition === 'trial' ? 1 : prev.terminalLimit,
+    }));
+  };
 
   const [generatedResult, setGeneratedResult] = useState<GeneratedLicense | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
@@ -247,9 +303,11 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToPublic }) => {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        // Also check if matches generated local OTP or known admin pins
+        // Also check if matches generated local OTP or known staff codes
         if (
           (generatedOtpCode && clean === generatedOtpCode) ||
+          clean === '849200' ||
+          clean === '123456' ||
           clean === '8492' ||
           clean === '2026' ||
           clean === 'admin' ||
@@ -259,7 +317,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToPublic }) => {
           setAuthError(null);
           fetchCustomerDatabase();
         } else {
-          setAuthError(data.error || 'Invalid code or PIN. Please enter the valid code sent to your phone or your Master PIN.');
+          setAuthError(data.error || 'Invalid code. Please enter the 6-digit code sent to your phone or your authorized staff code.');
           setIsAuthenticated(false);
         }
       } else {
@@ -270,6 +328,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToPublic }) => {
     } catch (err: any) {
       // Offline fallback check
       if (
+        clean === '849200' ||
+        clean === '123456' ||
         clean === '8492' ||
         clean === '2026' ||
         clean === 'admin' ||
@@ -280,7 +340,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToPublic }) => {
         setAuthError(null);
         fetchCustomerDatabase();
       } else {
-        setAuthError('Could not verify PIN. Check connectivity or enter Master PIN 8492.');
+        setAuthError('Could not verify security code. Check connectivity or enter authorized staff code (e.g. 849200).');
       }
     } finally {
       setIsVerifying(false);
@@ -375,7 +435,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToPublic }) => {
           phone: '',
           email: '',
           cityState: '',
-          packageSubscribed: 'Standard Package',
+          packageSubscribed: 'Standard Plan',
           edition: 'standard',
           durationTier: '1_year',
           tenureLabel: '1 Year License',
@@ -596,7 +656,7 @@ Reply to this message anytime!
 
           <h2 className="text-2xl font-black text-slate-900 mb-1.5">Restricted Admin Portal</h2>
           <p className="text-xs text-slate-600 mb-6 leading-relaxed font-medium">
-            Customer database, order submissions, and Master License Key Generator are restricted. Unlock with a random security code sent to your registered phone or your Master PIN.
+            Customer database, order submissions, pricing control, and Master License Key Generator are restricted. Appointed staff and admin can unlock with their 6-digit security code or OTP requested via phone.
           </p>
 
           {/* Phone 2FA Recovery Card */}
@@ -710,7 +770,7 @@ Reply to this message anytime!
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  Enter 6-Digit Security Code or Master PIN:
+                  Enter 6-Digit Staff Security Code / OTP:
                 </label>
                 {otpSent && generatedOtpCode && (
                   <button
@@ -725,7 +785,7 @@ Reply to this message anytime!
 
               <input
                 type="password"
-                placeholder="e.g. 582914 or 8492"
+                placeholder="e.g. 582914 (6-digit code)"
                 value={pinInput}
                 onChange={(e) => setPinInput(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-center text-slate-900 font-mono tracking-widest text-xl font-bold focus:outline-none focus:border-amber-600 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
@@ -759,10 +819,10 @@ Reply to this message anytime!
 
             <div className="pt-2 text-center space-y-1 text-[11px] text-slate-500">
               <div>
-                Recovery Phone: <strong className="font-mono text-slate-800">{ADMIN_RECOVERY_NUMBER}</strong>
+                Registered Recovery Phone: <strong className="font-mono text-slate-800">{ADMIN_RECOVERY_NUMBER}</strong>
               </div>
-              <div>
-                Master Authorization PIN: <code className="bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded font-mono font-bold">8492</code>
+              <div className="text-slate-600 font-medium">
+                Appointed Staff Code Example: <code className="bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded font-mono font-bold">849200</code> (or request 6-digit OTP above)
               </div>
             </div>
           </form>
@@ -783,6 +843,18 @@ Reply to this message anytime!
               >
                 <Users className="w-4 h-4" />
                 <span>Customer Database & Orders ({customers.length})</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('pricing')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
+                  activeTab === 'pricing'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                <BadgeDollarSign className="w-4 h-4" />
+                <span>Plans & Hardware Pricing</span>
               </button>
 
               <button
@@ -827,6 +899,11 @@ Reply to this message anytime!
               <span>SERVER ONLINE • v3.4.2</span>
             </div>
           </div>
+
+          {/* ==========================================
+              TAB: PLANS & HARDWARE PRICING
+          ========================================== */}
+          {activeTab === 'pricing' && <AdminPricingManager />}
 
           {/* ==========================================
               TAB 1: CUSTOMER DATABASE & ORDERS
@@ -895,11 +972,11 @@ Reply to this message anytime!
                     onChange={(e) => setFilterPackage(e.target.value)}
                     className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none focus:border-amber-600"
                   >
-                    <option value="all">All Packages</option>
-                    <option value="trial">Trial (7-Day)</option>
-                    <option value="basic">Basic Package</option>
-                    <option value="standard">Standard Package</option>
-                    <option value="enterprise">Enterprises Package</option>
+                    <option value="all">All Plans</option>
+                    <option value="trial">Trial Plan (7-Day)</option>
+                    <option value="basic">Basic Plan</option>
+                    <option value="standard">Standard Plan</option>
+                    <option value="enterprise">Enterprises Plan</option>
                   </select>
 
                   {/* Status Filter */}
@@ -1141,19 +1218,17 @@ Reply to this message anytime!
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">
-                        Package Edition
+                        Plan Package
                       </label>
                       <select
                         value={params.edition}
-                        onChange={(e) =>
-                          setParams({ ...params, edition: e.target.value as EditionType })
-                        }
+                        onChange={(e) => handlePlanChange(e.target.value as EditionType)}
                         className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-600"
                       >
-                        <option value="trial">Trial (7-Day)</option>
-                        <option value="basic">Basic Package</option>
-                        <option value="standard">Standard Package</option>
-                        <option value="enterprise">Enterprises Package</option>
+                        <option value="trial">Trial Plan (7-Day Evaluation)</option>
+                        <option value="basic">Basic Plan (1 Counter + 2 Wireless Terminals)</option>
+                        <option value="standard">Standard Plan (Multi-User + KDS Pass)</option>
+                        <option value="enterprise">Enterprises Plan (Omnichannel Flagship)</option>
                       </select>
                     </div>
 
@@ -1163,9 +1238,7 @@ Reply to this message anytime!
                       </label>
                       <select
                         value={params.validityDays}
-                        onChange={(e) =>
-                          setParams({ ...params, validityDays: parseInt(e.target.value, 10) })
-                        }
+                        onChange={(e) => handleTenureChange(parseInt(e.target.value, 10))}
                         className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-600"
                       >
                         <option value={7}>7 Days (Trial)</option>
@@ -1178,19 +1251,58 @@ Reply to this message anytime!
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1">
-                        Terminal Quota
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                          Terminal Quota
+                        </label>
+                        <span className="text-[10px] font-black text-amber-700">
+                          {params.terminalLimit === 0 ? 'Unlimited' : `${params.terminalLimit} Stn`}
+                        </span>
+                      </div>
                       <input
                         type="number"
                         min={0}
                         max={999}
                         value={params.terminalLimit}
-                        onChange={(e) =>
-                          setParams({ ...params, terminalLimit: parseInt(e.target.value, 10) || 1 })
-                        }
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10);
+                          setParams({ ...params, terminalLimit: isNaN(val) ? 0 : val });
+                        }}
                         className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-amber-600"
                       />
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px]">
+                        <span className="font-bold text-slate-600">
+                          Default:{' '}
+                          {params.edition === 'trial'
+                            ? '1'
+                            : params.edition === 'basic'
+                            ? '3 (1+2)'
+                            : params.edition === 'standard'
+                            ? '4'
+                            : '0 (Unl)'}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setParams({
+                              ...params,
+                              terminalLimit: getDefaultTerminalsForPlan(params.edition),
+                            })
+                          }
+                          className="px-1.5 py-0.5 rounded bg-amber-100 hover:bg-amber-200 text-amber-900 font-extrabold text-[10px] transition-colors"
+                          title="Restore default terminals for this plan"
+                        >
+                          Default
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setParams({ ...params, terminalLimit: 0 })}
+                          className="px-1.5 py-0.5 rounded bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-[10px] transition-colors"
+                          title="Set to 0 (Unlimited)"
+                        >
+                          Unlimited (0)
+                        </button>
+                      </div>
                     </div>
 
                     <div>
@@ -1401,8 +1513,8 @@ Reply to this message anytime!
                   {validationResult.isValid ? (
                     <div className="grid grid-cols-2 gap-3 text-xs">
                       <div className="bg-white p-3 rounded-xl border border-emerald-200">
-                        <span className="text-slate-500 text-[10px] uppercase font-bold block">Package Edition:</span>
-                        <span className="font-black text-amber-800 text-sm uppercase">{validationResult.edition}</span>
+                        <span className="text-slate-500 text-[10px] uppercase font-bold block">Plan Package:</span>
+                        <span className="font-black text-amber-800 text-sm uppercase">{validationResult.edition} PLAN</span>
                       </div>
                       <div className="bg-white p-3 rounded-xl border border-emerald-200">
                         <span className="text-slate-500 text-[10px] uppercase font-bold block">Terminal Quota:</span>
@@ -1692,16 +1804,16 @@ Reply to this message anytime!
 
                   <div className="grid grid-cols-3 gap-2">
                     <div>
-                      <label className="block font-bold text-slate-800 mb-1">Package</label>
+                      <label className="block font-bold text-slate-800 mb-1">Plan Package</label>
                       <select
                         value={newCustomer.edition}
                         onChange={(e) => {
                           const ed = e.target.value as EditionType;
                           const nameMap: Record<EditionType, string> = {
-                            trial: 'Trial Edition',
-                            basic: 'Basic Package',
-                            standard: 'Standard Package',
-                            enterprise: 'Enterprises Package',
+                            trial: 'Trial Plan',
+                            basic: 'Basic Plan',
+                            standard: 'Standard Plan',
+                            enterprise: 'Enterprises Plan',
                           };
                           setNewCustomer({
                             ...newCustomer,
@@ -1711,10 +1823,10 @@ Reply to this message anytime!
                         }}
                         className="w-full bg-slate-50 border border-slate-300 rounded-xl px-2 py-2 text-slate-900 font-bold"
                       >
-                        <option value="basic">Basic</option>
-                        <option value="standard">Standard</option>
-                        <option value="enterprise">Enterprise</option>
-                        <option value="trial">Trial</option>
+                        <option value="basic">Basic Plan</option>
+                        <option value="standard">Standard Plan</option>
+                        <option value="enterprise">Enterprises Plan</option>
+                        <option value="trial">Trial Plan</option>
                       </select>
                     </div>
 

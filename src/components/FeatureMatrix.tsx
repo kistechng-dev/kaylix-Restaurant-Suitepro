@@ -29,10 +29,10 @@ export const FeatureMatrix: React.FC = () => {
           <div className="flex items-center p-1 bg-white rounded-xl border border-slate-300 mb-3 gap-1 overflow-x-auto no-scrollbar shadow-2xs">
             {(
               [
-                { id: 'trial', label: 'Trial (7-Day)' },
-                { id: 'basic', label: 'Basic' },
-                { id: 'standard', label: 'Standard ⭐' },
-                { id: 'enterprise', label: 'Enterprise 👑' },
+                { id: 'trial', label: 'Trial Plan' },
+                { id: 'basic', label: 'Basic Plan' },
+                { id: 'standard', label: 'Standard Plan ⭐' },
+                { id: 'enterprise', label: 'Enterprises Plan 👑' },
               ] as { id: EditionType; label: string }[]
             ).map((pkg) => (
               <button
@@ -65,10 +65,16 @@ export const FeatureMatrix: React.FC = () => {
               <div className="pb-3 flex items-center justify-between">
                 <div>
                   <span className="text-[10px] font-black uppercase tracking-wider text-amber-800">
-                    Package Features
+                    Plan Features
                   </span>
                   <h4 className="text-base font-black text-slate-900 capitalize">
-                    {mobilePackage === 'standard' ? 'Standard Package (Recommended)' : `${mobilePackage} Edition`}
+                    {mobilePackage === 'standard'
+                      ? 'Standard Plan (Recommended)'
+                      : mobilePackage === 'trial'
+                      ? 'Trial Plan'
+                      : mobilePackage === 'basic'
+                      ? 'Basic Plan'
+                      : 'Enterprises Plan'}
                   </h4>
                 </div>
                 <span className="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-mono font-bold">
@@ -124,12 +130,12 @@ export const FeatureMatrix: React.FC = () => {
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-100 text-slate-900">
                   <th className="py-3.5 px-4 font-black text-slate-900 w-1/3">Feature / Capability</th>
-                  <th className="py-3.5 px-3 font-extrabold text-blue-900 text-center">Trial (7-Day)</th>
-                  <th className="py-3.5 px-3 font-extrabold text-slate-900 text-center">Basic Package</th>
+                  <th className="py-3.5 px-3 font-extrabold text-blue-900 text-center">Trial Plan</th>
+                  <th className="py-3.5 px-3 font-extrabold text-slate-900 text-center">Basic Plan</th>
                   <th className="py-3.5 px-3 font-black text-amber-900 text-center bg-amber-100/70 border-l border-r border-amber-300">
-                    Standard Pack
+                    Standard Plan
                   </th>
-                  <th className="py-3.5 px-3 font-extrabold text-purple-900 text-center">Enterprises</th>
+                  <th className="py-3.5 px-3 font-extrabold text-purple-900 text-center">Enterprises Plan</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-800">

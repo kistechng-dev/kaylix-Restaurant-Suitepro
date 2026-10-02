@@ -1112,7 +1112,7 @@ INCLUDED ENTERPRISE UPDATES IN THIS PACKAGE:
 DEFAULT LOGIN CREDENTIALS:
 --------------------------------------------------------------------------------
 Super-Admin Username: admin
-Default PIN: 1234
+Default Staff PIN: 123456
 
 Need help? Contact Reseller Support:
 WhatsApp: ${VENDOR_CONTACT.whatsappDisplay} (${VENDOR_CONTACT.email})

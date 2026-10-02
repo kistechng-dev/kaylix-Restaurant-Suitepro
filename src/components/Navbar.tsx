@@ -98,7 +98,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             <Package className="w-3.5 h-3.5 text-amber-600" />
-            <span>Choose Package</span>
+            <span>Plan Packages</span>
           </button>
 
           <button

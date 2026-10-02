@@ -44,14 +44,20 @@ export interface BankAccount {
   isPrimary?: boolean;
 }
 
+export type HardwareCategory = 'printer' | 'scanner' | 'drawer' | 'tablet' | 'terminal' | 'handheld' | 'display' | 'accessory';
+export type HardwareAvailability = 'in_stock' | 'low_stock' | 'pre_order' | 'out_of_stock';
+
 export interface HardwareAddon {
   id: string;
   name: string;
-  category: 'printer' | 'scanner' | 'drawer' | 'tablet' | 'terminal';
+  category: HardwareCategory;
   priceNGN: number;
   priceUSD: number;
   description: string;
   specs: string;
+  availability?: HardwareAvailability;
+  badge?: string;
+  isFeatured?: boolean;
 }
 
 export interface OrderFormData {

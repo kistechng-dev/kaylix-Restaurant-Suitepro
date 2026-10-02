@@ -83,21 +83,21 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToPage, onScrollToSect
             </ul>
           </div>
 
-          {/* Software Packages */}
+          {/* Software Plans */}
           <div className="space-y-2.5">
-            <h4 className="text-slate-900 font-black text-xs uppercase tracking-wider">Packages</h4>
+            <h4 className="text-slate-900 font-black text-xs uppercase tracking-wider">Plan Packages</h4>
             <ul className="space-y-1.5 text-xs text-slate-700 font-medium">
               <li>
-                <strong className="text-slate-900">Trial Edition:</strong> 7-Day Free Full Pass
+                <strong className="text-slate-900">Trial Plan:</strong> 7-Day Free Full Pass
               </li>
               <li>
-                <strong className="text-slate-900">Basic Package:</strong> 1 Standalone POS + 2 Wireless Terminals
+                <strong className="text-slate-900">Basic Plan:</strong> 1 Standalone POS + 2 Wireless Terminals
               </li>
               <li>
-                <strong className="text-amber-800">Standard Package:</strong> Multi-User + KDS Pass
+                <strong className="text-amber-800">Standard Plan:</strong> Multi-User + KDS Pass
               </li>
               <li>
-                <strong className="text-purple-900">Enterprises:</strong> Omnichannel Flagship
+                <strong className="text-purple-900">Enterprises Plan:</strong> Omnichannel Flagship
               </li>
             </ul>
           </div>

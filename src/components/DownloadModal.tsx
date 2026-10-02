@@ -178,7 +178,7 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({ edition, onClose }
             <ShieldCheck className="w-4 h-4 mt-0.5 shrink-0 text-amber-700" />
             <div>
               <span className="font-bold block">First Time Login Credentials:</span>
-              <span>Username: <strong className="text-slate-900 font-mono font-bold">admin</strong> • Default PIN: <strong className="text-slate-900 font-mono font-bold">1234</strong></span>
+              <span>Username: <strong className="text-slate-900 font-mono font-bold">admin</strong> • Default Staff Code: <strong className="text-slate-900 font-mono font-bold">123456</strong></span>
             </div>
           </div>
 

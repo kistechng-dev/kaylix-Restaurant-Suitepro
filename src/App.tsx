@@ -18,6 +18,7 @@ import { PhoneSimulatorWrapper } from './components/PhoneSimulatorWrapper';
 import { EditionDetail, EditionType, DurationTier } from './types';
 import { EDITIONS } from './data/mockData';
 import { Package, Building2, MessageSquare, ArrowRight, ShieldCheck, ChevronRight } from 'lucide-react';
+import { syncPricingWithServer } from './utils/pricingStorage';
 
 export default function App() {
   const [currency, setCurrency] = useState<'NGN' | 'USD'>('NGN');
@@ -45,8 +46,9 @@ export default function App() {
     return false;
   });
 
-  // Hash synchronization
+  // Hash synchronization and initial pricing sync
   useEffect(() => {
+    syncPricingWithServer();
     const handleHashChange = () => {
       const hash = window.location.hash.toLowerCase();
       if (hash === '#admin' || window.location.pathname === '/admin') {
@@ -126,15 +128,15 @@ export default function App() {
                     <span>Home / Tour</span>
                   </button>
                   <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-                  <span className="text-amber-900 font-extrabold">Choose Your Hospitality Package</span>
+                  <span className="text-amber-900 font-extrabold">Choose Your Plan Package</span>
                 </div>
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div>
                     <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-slate-900 tracking-tight">
-                      Choose Your Hospitality Package
+                      Choose Your Plan Package
                     </h1>
                     <p className="mt-2 text-sm sm:text-base text-slate-600 font-medium max-w-2xl leading-relaxed">
-                      Select from our 4 tailored restaurant & hospitality POS packages with flexible duration tiers (1 Year, 3 Years, Lifetime) or test completely free with our 7-Day evaluation build.
+                      Select from our 4 tailored restaurant & hospitality POS plans with flexible duration tiers (1 Year, 3 Years, Lifetime) or test completely free with our 7-Day evaluation build.
                     </p>
                   </div>
 
@@ -286,7 +288,7 @@ export default function App() {
                     onClick={() => navigateToPage('plan')}
                     className="hover:underline hover:text-slate-900"
                   >
-                    <span>Hospitality Packages</span>
+                    <span>Plan Packages</span>
                   </button>
                   <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                   <span className="text-slate-900 font-extrabold">My Order</span>
@@ -297,7 +299,7 @@ export default function App() {
                       My Order
                     </h1>
                     <p className="mt-2 text-sm sm:text-base text-slate-600 font-medium max-w-2xl leading-relaxed">
-                      Review your selected hospitality package, configure optional thermal printers & touchscreen hardware, enter restaurant delivery details, and submit.
+                      Review your selected hospitality plan, configure optional thermal printers & touchscreen hardware, enter restaurant delivery details, and submit.
                     </p>
                   </div>
 
@@ -307,7 +309,7 @@ export default function App() {
                       className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-2xs transition-all active:scale-95"
                     >
                       <Package className="w-4 h-4 text-amber-600" />
-                      <span>Change Package</span>
+                      <span>Change Plan</span>
                     </button>
                     <button
                       onClick={() => navigateToPage('banks')}
@@ -363,14 +365,14 @@ export default function App() {
                       <Package className="w-5 h-5" />
                     </div>
                     <h4 className="text-base font-black text-slate-900 group-hover:text-amber-700 transition-colors">
-                      Choose Your Hospitality Package
+                      Choose Your Plan Package
                     </h4>
                     <p className="text-xs text-slate-600 mt-1.5 leading-relaxed">
-                      Compare Trial (7-Day), Basic, Standard, and Enterprise with full pricing tiers & comparison matrix.
+                      Compare Trial Plan, Basic Plan, Standard Plan, and Enterprises Plan with full pricing tiers & comparison matrix.
                     </p>
                   </div>
                   <div className="mt-4 pt-3 border-t border-slate-100 flex items-center gap-1 text-xs font-bold text-amber-700">
-                    <span>View Packages</span>
+                    <span>View Plans</span>
                     <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>

@@ -3,7 +3,7 @@ import { EditionDetail, BankAccount, HardwareAddon } from '../types';
 export const EDITIONS: Record<string, EditionDetail> = {
   trial: {
     id: 'trial',
-    name: 'Trial Edition',
+    name: 'Trial Plan',
     badge: '7-Day Free Evaluation',
     tagline: 'Experience the full power of Kaylix Kitchen for 7 days with zero upfront commitment.',
     defaultTier: '7_days',
@@ -40,7 +40,7 @@ export const EDITIONS: Record<string, EditionDetail> = {
   },
   basic: {
     id: 'basic',
-    name: 'Basic Package',
+    name: 'Basic Plan',
     badge: '1 Standalone Counter POS + 2 Wireless Handheld Terminals',
     tagline: '1 Standalone Counter POS + 2 Wireless Handheld Terminals for quick checkout counters.',
     defaultTier: '1_year',
@@ -96,7 +96,7 @@ export const EDITIONS: Record<string, EditionDetail> = {
   },
   standard: {
     id: 'standard',
-    name: 'Standard Package',
+    name: 'Standard Plan',
     badge: 'Multi-User + KDS Pass',
     tagline: 'Multi-User + KDS Pass for synchronized dining rooms and high-volume kitchens.',
     defaultTier: '1_year',
@@ -150,7 +150,7 @@ export const EDITIONS: Record<string, EditionDetail> = {
   },
   enterprise: {
     id: 'enterprise',
-    name: 'Enterprises Package',
+    name: 'Enterprises Plan',
     badge: 'Omnichannel Flagship',
     tagline: 'Omnichannel Flagship with unrestricted terminal scaling, central commissary, and multi-branch cloud.',
     defaultTier: 'lifetime',
