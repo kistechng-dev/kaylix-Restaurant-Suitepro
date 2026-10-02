@@ -386,7 +386,14 @@ Please send payment confirmation and issue license key details. Thank you!`;
                       <div
                         key={edId}
                         onClick={() => {
-                          const newTier = edId === 'trial' ? '7_days' : formData.durationTier === '7_days' ? '1_year' : formData.durationTier;
+                          const newTier =
+                            edId === 'trial'
+                              ? '7_days'
+                              : edId === 'enterprise'
+                              ? 'lifetime'
+                              : formData.durationTier === '7_days'
+                              ? '1_year'
+                              : formData.durationTier;
                           setFormData({ ...formData, edition: edId, durationTier: newTier });
                         }}
                         className={`cursor-pointer rounded-xl p-2.5 border transition-all ${

@@ -463,13 +463,13 @@ ${generatedResult.modules.map((m) => `• ${m}`).join('\n')}
                             edition: ed,
                             validityDays: ed === 'trial' ? 7 : params.validityDays,
                             terminalLimit:
-                              ed === 'basic' ? 1 : ed === 'standard' ? 3 : ed === 'enterprise' ? 0 : 1,
+                              ed === 'basic' ? 3 : ed === 'standard' ? 4 : ed === 'enterprise' ? 0 : 1,
                           });
                         }}
                         className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500"
                       >
                         <option value="trial">Trial Edition (7-Day Free Evaluation)</option>
-                        <option value="basic">Basic Package (Single POS + 1 Wireless)</option>
+                        <option value="basic">Basic Package (1 Standalone POS + 2 Wireless Terminals)</option>
                         <option value="standard">Standard Package (Multi-User + KDS Pass)</option>
                         <option value="enterprise">Enterprises Package (Omnichannel Flagship)</option>
                       </select>
@@ -487,8 +487,8 @@ ${generatedResult.modules.map((m) => `• ${m}`).join('\n')}
                         className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-purple-500"
                       >
                         <option value={1}>1 Station (Standalone Counter)</option>
-                        <option value={2}>2 Stations (Counter + 1 Wireless)</option>
-                        <option value={3}>3 Stations (Standard Restaurant + KDS)</option>
+                        <option value={3}>3 Stations (1 Counter + 2 Wireless Terminals)</option>
+                        <option value={4}>4 Stations (Standard Restaurant + KDS)</option>
                         <option value={5}>5 Stations (Medium Dining Lounge)</option>
                         <option value={10}>10 Stations (Large Multi-Floor)</option>
                         <option value={0}>Unlimited Stations (Omnichannel Flagship)</option>
