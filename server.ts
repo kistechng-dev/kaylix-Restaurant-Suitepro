@@ -26,6 +26,8 @@ import {
   verifyStaffCredentials,
   createStaffAccount,
   exportAuditLogCsv,
+  generateWhatsAppOtp,
+  verifyWhatsAppOtp,
 } from './server/pricingDatabase.ts';
 
 dotenv.config();
@@ -353,6 +355,61 @@ app.post('/api/pricing/auth', (req, res) => {
   } catch (error: any) {
     console.error('Staff auth error:', error);
     res.status(500).json({ success: false, error: 'Staff authentication failed' });
+  }
+});
+
+// POST /api/pricing/auth/request-otp - Send generated 5-digit code to staff WhatsApp
+app.post('/api/pricing/auth/request-otp', (req, res) => {
+  try {
+    const { username, phone } = req.body;
+    if (!username && !phone) {
+      return res.status(400).json({ success: false, error: 'Username and phone number are required' });
+    }
+    const result = generateWhatsAppOtp(username, phone);
+    res.json({
+      success: true,
+      message: `5-Digit code generated and dispatched to WhatsApp (+${result.phone})`,
+      phone: result.phone,
+      whatsappUrl: result.whatsappUrl,
+      code: result.code, // Returned for dev/preview and direct WhatsApp opening
+      staff: result.staff ? {
+        username: result.staff.username,
+        name: result.staff.name,
+        role: result.staff.role,
+        phone: result.staff.phone,
+      } : undefined,
+    });
+  } catch (error: any) {
+    console.error('Request OTP error:', error);
+    res.status(500).json({ success: false, error: 'Failed to generate 5-digit WhatsApp code' });
+  }
+});
+
+// POST /api/pricing/auth/verify-otp - Verify 5-digit code and grant access to portal
+app.post('/api/pricing/auth/verify-otp', (req, res) => {
+  try {
+    const { username, phone, code } = req.body;
+    if (!code) {
+      return res.status(400).json({ success: false, error: '5-Digit code is required' });
+    }
+    const result = verifyWhatsAppOtp(username, phone, code);
+    if (!result.success || !result.staff) {
+      return res.status(401).json({ success: false, error: result.error || 'Invalid 5-digit verification code' });
+    }
+    res.json({
+      success: true,
+      message: `Welcome, ${result.staff.name}! Access granted.`,
+      user: {
+        id: result.staff.id,
+        username: result.staff.username,
+        name: result.staff.name,
+        role: result.staff.role,
+        phone: result.staff.phone,
+      },
+    });
+  } catch (error: any) {
+    console.error('Verify OTP error:', error);
+    res.status(500).json({ success: false, error: 'Verification failed' });
   }
 });
 

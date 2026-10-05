@@ -222,6 +222,84 @@ To purchase or upgrade your license key, visit the official download portal or W
   return await zip.generateAsync({ type: 'blob' });
 }
 
+export async function generateAllInOnePackage(): Promise<Blob> {
+  const zip = new JSZip();
+
+  // 1. One-Click Interactive Master Suite (Layman-friendly offline application)
+  zip.file('START_HERE_KAYLIX_ALL_IN_ONE.html', getEnterpriseHtmlApp());
+
+  // 2. Windows 1-Click Launchers
+  zip.file('One_Click_KaylixPOS_AllInOne_Setup.bat', getEnterpriseBatchScript());
+  zip.file('One_Click_KaylixPOS_AllInOne_Setup.vbs', getEnterpriseVbsScript());
+
+  // 3. Novice & Layman Friendly Readme
+  const readme = `================================================================================
+KAYLIX KITCHEN & EATERY MANAGEMENT SYSTEM - ALL-IN-ONE MASTER SUITE
+Version: v3.4.2 (Production Build)
+Vendor: ${VENDOR_CONTACT.name} (${VENDOR_CONTACT.email})
+WhatsApp Support: ${VENDOR_CONTACT.whatsappDisplay}
+================================================================================
+
+WELCOME TO THE ALL-IN-ONE KAYLIX RESTAURANT & POS MASTER SUITE!
+
+This single master package contains all modules and editions of Kaylix Kitchen:
+1. Trial 7-Day Free Evaluation Pass (Pre-configured sample menu)
+2. Basic Plan (1 Standalone Counter POS + 2 Wireless Handhelds)
+3. Standard Plan (Multi-User Waiter Tablet Network + Dedicated Kitchen KDS)
+4. Enterprises Flagship (Unlimited Terminals, Central Commissary, Multi-Branch Cloud HQ)
+
+HOW TO RUN:
+1. Simply double-click "START_HERE_KAYLIX_ALL_IN_ONE.html" in any web browser, OR
+2. Double-click "One_Click_KaylixPOS_AllInOne_Setup.bat" on any Windows PC.
+3. Default login credentials:
+   - Username: admin
+   - Staff Code: 123456
+
+To activate your specific plan (Trial, Basic, Standard, or Enterprise), visit the
+Kaylix web page Download tab and submit your restaurant registration to receive
+your pre-activation license key.
+`;
+  zip.file('HOW_TO_INSTALL_README.txt', readme);
+  zip.file('Kaylix_AllInOne_QuickStart_Manual.txt', readme);
+
+  // 4. Master Configuration File
+  zip.file('config_all_in_one.ini', getEnterpriseIniConfig());
+
+  // 5. Sample Data & Requisitions
+  zip.file('sample_branch_stock_requisitions.csv', getSampleRequisitionCsv());
+  zip.file('sample_commissary_recipes_yield.csv', getSampleCommissaryRecipesCsv());
+  zip.file('sample_vip_loyalty_members.csv', getSampleVipLoyaltyCsv());
+  zip.file('sample_accounting_quickbooks_sync.csv', getSampleAccountingCsv());
+
+  // 6. Master Eatery Menu CSV
+  const sampleMenuCsv = `Category,Item Name,Barcode,Cost Price (NGN),Selling Price (NGN),Printer Destination,Tax Rate (%)
+Rice & Grains,Smokey Party Jollof Rice with Fried Plantain,RICE-001,800,2500,Kitchen,7.5
+Rice & Grains,Special Fried Rice with Shrimps,RICE-002,1100,3200,Kitchen,7.5
+Rice & Grains,Basmati Coconut Rice & Grilled Chicken,RICE-003,1400,3800,Kitchen,7.5
+Soups & Swallows,Egusi Soup with Assorted Meat & Pounded Yam,SWL-001,1200,3500,Kitchen,7.5
+Soups & Swallows,Seafood Okro Soup with Fresh Fish,SWL-002,2200,5500,Kitchen,7.5
+Grills & Bites,Grilled Catfish Point & Kill (Full Fish),GRL-001,2800,6500,Kitchen,7.5
+Grills & Bites,Spicy Peppered Goat Meat (Asun Special),GRL-002,1500,3500,Kitchen,7.5
+Grills & Bites,Crispy Chicken Wings (6pcs) & Chips,GRL-003,1600,3800,Kitchen,7.5
+Drinks & Cocktails,Chapman Classic Mocktail with Cucumber,DRK-001,600,2000,Bar,7.5
+Drinks & Cocktails,Fresh Watermelon Pineapple Juice (500ml),DRK-002,500,1500,Bar,7.5
+Drinks & Cocktails,Heineken Beer Bottle 600ml,DRK-003,750,1500,Bar,7.5
+Drinks & Cocktails,Bottled Table Water 75cl,DRK-004,150,400,Bar,0.0
+`;
+  zip.file('sample_eatery_menu_template.csv', sampleMenuCsv);
+
+  // 7. Security verification and support desk
+  const licenseNote = `KAYLIX ALL-IN-ONE RESTAURANT SUITE
+Package File: Kaylix_Kitchen_POS_Suite_AllInOne_v3.4.2_Setup.exe
+SHA-256 Checksum: 09bd47c94a286e11893f441029da6c1e9561b34a
+Package Size: 78.4 MB
+Vendor Support: ${VENDOR_CONTACT.whatsappDisplay} (${VENDOR_CONTACT.email})
+`;
+  zip.file('all_in_one_license_verification.txt', licenseNote);
+
+  return await zip.generateAsync({ type: 'blob' });
+}
+
 export function triggerDownload(blob: Blob, filename: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

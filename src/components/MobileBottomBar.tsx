@@ -42,15 +42,23 @@ export const MobileBottomBar: React.FC<MobileBottomBarProps> = ({
           <span className="text-[10px] font-bold tracking-tight mt-0.5">Plan</span>
         </button>
 
-        {/* Free Trial Center Button */}
+        {/* Download Center Button */}
         <button
-          onClick={onOpenTrialModal}
+          onClick={() => onNavigateToPage('download')}
           className="flex flex-col items-center justify-center -mt-3 group active:scale-95 transition-transform"
         >
-          <div className="w-11 h-11 rounded-full bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-600 text-white flex items-center justify-center shadow-lg shadow-orange-500/30 ring-3 ring-white">
+          <div className={`w-11 h-11 rounded-full text-white flex items-center justify-center shadow-lg shadow-orange-500/30 ring-3 ring-white transition-all ${
+            currentPage === 'download'
+              ? 'bg-gradient-to-tr from-amber-600 via-orange-600 to-amber-700 ring-amber-400 scale-105'
+              : 'bg-gradient-to-tr from-amber-500 via-orange-500 to-amber-600'
+          }`}>
             <Download className="w-5 h-5 stroke-[2.5]" />
           </div>
-          <span className="text-[10px] font-black text-amber-700 tracking-tight mt-0.5">7-Day Trial</span>
+          <span className={`text-[10px] font-black tracking-tight mt-0.5 ${
+            currentPage === 'download' ? 'text-amber-900 underline' : 'text-amber-700'
+          }`}>
+            Download
+          </span>
         </button>
 
         {/* Direct Bank Transfer & Payment Details Page */}

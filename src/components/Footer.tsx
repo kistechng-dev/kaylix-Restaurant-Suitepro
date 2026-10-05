@@ -13,6 +13,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToPage, onScrollToSect
   const handleNav = (target: PageType | string) => {
     if (onNavigateToPage) {
       if (target === 'whatsapp-order' || target === 'order') onNavigateToPage('order');
+      else if (target === 'download' || target === 'downloads') onNavigateToPage('download');
       else if (target === 'bank-details' || target === 'banks') onNavigateToPage('banks');
       else if (target === 'editions' || target === 'comparison' || target === 'plan') onNavigateToPage('plan');
       else onNavigateToPage('tour');
@@ -62,6 +63,14 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToPage, onScrollToSect
                   className="hover:text-amber-700 transition-colors text-left"
                 >
                   Choose Your Hospitality Package
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => handleNav('download')}
+                  className="hover:text-amber-700 transition-colors text-left font-bold text-amber-800"
+                >
+                  Download Software & Register
                 </button>
               </li>
               <li>

@@ -29,6 +29,14 @@ import {
   Sliders,
   Tv,
   Radio,
+  MessageSquare,
+  Phone,
+  Send,
+  ExternalLink,
+  ChevronRight,
+  KeyRound,
+  Users,
+  Info,
 } from 'lucide-react';
 import {
   PricingConfig,
@@ -41,6 +49,9 @@ import {
   StaffAccount,
   PricingAuditLogEntry,
   INITIAL_STAFF_ACCOUNTS,
+  requestStaffWhatsAppOtp,
+  verifyStaffWhatsAppOtp,
+  normalizePhoneNumber,
 } from '../utils/pricingStorage';
 import { HardwareAddon, HardwareAvailability, HardwareCategory } from '../types';
 
@@ -48,20 +59,28 @@ export const AdminPricingManager: React.FC = () => {
   const [pricing, setPricing] = useState<PricingConfig>(getCustomPricing);
   const [currentStaff, setCurrentStaff] = useState<StaffAccount | null>(getCurrentStaffSession);
   
-  // Auth Modal State
+  // WhatsApp OTP Authentication Modal State
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authUsername, setAuthUsername] = useState('');
-  const [authPassword, setAuthPassword] = useState('');
+  const [authStep, setAuthStep] = useState<'credentials' | 'enter_code'>('credentials');
+  const [authUsername, setAuthUsername] = useState('store_manager');
+  const [authPhone, setAuthPhone] = useState('08060395329');
+  const [authCode, setAuthCode] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [dispatchedPhone, setDispatchedPhone] = useState('');
+  const [dispatchedWhatsappUrl, setDispatchedWhatsappUrl] = useState('');
+  const [dispatchedCode, setDispatchedCode] = useState<string | null>(null);
 
-  // New Staff Modal State
+  // New Staff Registration Modal State (Admin registers users with Phone Number)
   const [isNewStaffModalOpen, setIsNewStaffModalOpen] = useState(false);
+  const [showStaffDirectory, setShowStaffDirectory] = useState(false);
   const [newStaffForm, setNewStaffForm] = useState({
     username: '',
     password: '',
     name: '',
     role: 'store_manager' as 'admin' | 'store_manager' | 'pricing_officer',
-    phone: '234 806 0395 329',
+    phone: '08060395329',
   });
 
   // Hardware Management Modals
@@ -101,17 +120,14 @@ export const AdminPricingManager: React.FC = () => {
   const handleFxRateChange = (newRateStr: string) => {
     const rate = Math.max(100, parseInt(newRateStr, 10) || 1620);
     setPricing((prev) => {
-      // Auto recalculate all plan prices and hardware if autoSyncUSD is enabled
       const updated = { ...prev, blackMarketRateNGN: rate };
       if (updated.autoSyncUSD) {
-        // Recalculate plans
         (['basic', 'standard', 'enterprise'] as const).forEach((planKey) => {
           (['1_year', '3_years', 'lifetime'] as const).forEach((tierKey) => {
             const naira = updated.plans[planKey][tierKey].priceNGN;
             updated.plans[planKey][tierKey].priceUSD = calculateDollarFromNaira(naira, rate);
           });
         });
-        // Recalculate hardware
         updated.hardwareItems = updated.hardwareItems.map((item) => ({
           ...item,
           priceUSD: calculateDollarFromNaira(item.priceNGN, rate),
@@ -142,7 +158,7 @@ export const AdminPricingManager: React.FC = () => {
     setTimeout(() => setSaveSuccess(null), 3500);
   };
 
-  // Handle Plan Price Change (Auto converts USD from NGN via FX rate)
+  // Handle Plan Price Change
   const handlePlanPriceChange = (
     plan: 'basic' | 'standard' | 'enterprise',
     tier: '1_year' | '3_years' | 'lifetime',
@@ -211,6 +227,24 @@ export const AdminPricingManager: React.FC = () => {
       hardwareItems: prev.hardwareItems.map((item) =>
         item.id === hardwareId ? { ...item, availability } : item
       ),
+    }));
+  };
+
+  // Handle Google Drive Link change
+  const handleDriveLinkChange = (
+    planKey: 'allInOne' | 'trial' | 'basic' | 'standard' | 'enterprise',
+    newUrl: string
+  ) => {
+    setPricing((prev) => ({
+      ...prev,
+      driveLinks: {
+        allInOne: prev.driveLinks?.allInOne || 'https://drive.google.com/drive/folders/1sLwLpP_Kaylix_Kitchen_AllInOne_POS_Suite_v342?usp=sharing',
+        trial: prev.driveLinks?.trial || 'https://drive.google.com/drive/folders/1sLwLpP_Kaylix_Trial_POS_v342?usp=sharing',
+        basic: prev.driveLinks?.basic || 'https://drive.google.com/drive/folders/1kAx_Kaylix_Basic_POS_1Counter_2Handheld?usp=sharing',
+        standard: prev.driveLinks?.standard || 'https://drive.google.com/drive/folders/1mYz_Kaylix_Standard_POS_MultiUser_KDS?usp=sharing',
+        enterprise: prev.driveLinks?.enterprise || 'https://drive.google.com/drive/folders/1eNp_Kaylix_Enterprise_POS_CloudHQ?usp=sharing',
+        [planKey]: newUrl,
+      },
     }));
   };
 
@@ -323,37 +357,80 @@ export const AdminPricingManager: React.FC = () => {
     setTimeout(() => setSaveSuccess(null), 4000);
   };
 
-  // Staff Login
-  const handleStaffLogin = async (e: React.FormEvent) => {
+  // STEP 1: Request 5-Digit WhatsApp Access Code
+  const handleRequestWhatsAppCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError(null);
+    if (!authUsername.trim() || !authPhone.trim()) {
+      setAuthError('Please enter both your Username and WhatsApp Phone number.');
+      return;
+    }
+
+    setIsSendingOtp(true);
     try {
-      const res = await fetch('/api/pricing/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: authUsername, password: authPassword }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success && data.user) {
-        setCurrentStaff(data.user);
-        setStaffSession(data.user);
-        setIsAuthModalOpen(false);
-        setAuthUsername('');
-        setAuthPassword('');
-        setSaveSuccess(`Authenticated as ${data.user.name} (${data.user.role})`);
-        setTimeout(() => setSaveSuccess(null), 3000);
+      const res = await requestStaffWhatsAppOtp(authUsername, authPhone);
+      if (res.success) {
+        setDispatchedPhone(res.phone);
+        setDispatchedWhatsappUrl(res.whatsappUrl);
+        setDispatchedCode(res.code || null);
+        setAuthStep('enter_code');
+        setAuthCode('');
+
+        // Attempt to launch WhatsApp tab or link
+        if (res.whatsappUrl && typeof window !== 'undefined') {
+          // Open WhatsApp in a background tab if possible
+          const waWindow = window.open(res.whatsappUrl, '_blank');
+          if (!waWindow) {
+            // Popup blocked - link is directly clickable on modal
+          }
+        }
       } else {
-        setAuthError(data.error || 'Invalid credentials');
+        setAuthError(res.error || 'Failed to dispatch WhatsApp code. Check username and phone number.');
       }
     } catch (err: any) {
-      setAuthError('Connection failed. Please try again.');
+      setAuthError('Network error. Could not connect to WhatsApp dispatch service.');
+    } finally {
+      setIsSendingOtp(false);
     }
   };
 
-  // Admin creates new staff account
+  // STEP 2: Verify 5-Digit Code from WhatsApp
+  const handleVerifyWhatsAppCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError(null);
+    if (!authCode.trim()) {
+      setAuthError('Please enter the 5-digit verification code sent to your WhatsApp.');
+      return;
+    }
+
+    setIsVerifyingOtp(true);
+    try {
+      const res = await verifyStaffWhatsAppOtp(authUsername, dispatchedPhone || authPhone, authCode);
+      if (res.success && res.user) {
+        setCurrentStaff(res.user);
+        setIsAuthModalOpen(false);
+        setAuthStep('credentials');
+        setAuthCode('');
+        setSaveSuccess(`Welcome back, ${res.user.name}! 5-digit WhatsApp code verified.`);
+        setTimeout(() => setSaveSuccess(null), 4000);
+      } else {
+        setAuthError(res.error || 'Invalid 5-digit code. Please verify the code sent to your WhatsApp.');
+      }
+    } catch (err) {
+      setAuthError('Could not verify code. Please check your network connection.');
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
+  // Admin registers new user details WITH PHONE NUMBER
   const handleCreateStaff = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newStaffForm.username || !newStaffForm.password || !newStaffForm.name) return;
+    if (!newStaffForm.username || !newStaffForm.name || !newStaffForm.phone) {
+      alert('Please fill in Name, Username, Role, and WhatsApp Phone Number.');
+      return;
+    }
+
     try {
       const res = await fetch('/api/pricing/staff', {
         method: 'POST',
@@ -371,11 +448,11 @@ export const AdminPricingManager: React.FC = () => {
           password: '',
           name: '',
           role: 'store_manager',
-          phone: '234 806 0395 329',
+          phone: '08060395329',
         });
         setPricing(data.pricing);
-        setSaveSuccess(`New staff account for ${data.staff.name} (@${data.staff.username}) created successfully.`);
-        setTimeout(() => setSaveSuccess(null), 4000);
+        setSaveSuccess(`Registered user ${data.staff.name} (@${data.staff.username}) with WhatsApp: +${data.staff.phone}.`);
+        setTimeout(() => setSaveSuccess(null), 4500);
       }
     } catch (err) {
       console.error(err);
@@ -414,73 +491,135 @@ export const AdminPricingManager: React.FC = () => {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Top Banner: Commercial Desk, Staff Session, and FX Peg */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
+    <div className="space-y-4 sm:space-y-6 max-w-full overflow-hidden">
+      {/* Top Banner: Multi-Role Commercial Pricing & Inventory Desk */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-slate-200">
-          <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 mb-2">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">
               <BadgeDollarSign className="w-3.5 h-3.5 text-amber-700" />
               <span>Multi-Role Commercial Pricing & Inventory Desk</span>
             </div>
-            <h3 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <h3 className="text-lg sm:text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
               Plans & POS Hardware Pricing Control
             </h3>
-            <p className="text-xs text-slate-600 font-medium mt-1 max-w-2xl leading-relaxed">
+            <p className="text-xs text-slate-600 font-medium max-w-2xl leading-relaxed">
               Admin and Store Managers can adjust software pricing, manage POS hardware devices based on availability,
               and peg Dollar prices to the live Nigerian Black Market parallel exchange rate.
             </p>
           </div>
 
-          {/* Active Staff Account & Session Control */}
-          <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          {/* Active Staff Account & Session Control with Phone Info */}
+          <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-3 sm:p-3.5 flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-600 text-white flex items-center justify-center font-black shrink-0">
               <User className="w-5 h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-xs font-black text-slate-900">
-                  {currentStaff ? currentStaff.name : 'Chief Administrator'}
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-xs font-black text-slate-900 truncate">
+                  {currentStaff ? currentStaff.name : 'Chief Systems Administrator'}
                 </span>
                 <span className="text-[10px] uppercase font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300">
                   {currentStaff ? currentStaff.role.replace('_', ' ') : 'admin'}
                 </span>
               </div>
-              <span className="text-[11px] text-slate-500 font-mono block">
-                @{currentStaff ? currentStaff.username : 'admin'} • Verified Staff Session
+              <span className="text-[11px] text-slate-500 font-mono block truncate">
+                @{currentStaff ? currentStaff.username : 'admin'} • Tel: +{currentStaff?.phone ? normalizePhoneNumber(currentStaff.phone) : '2348060395329'}
               </span>
             </div>
 
-            <div className="flex items-center gap-1.5 sm:ml-auto">
+            <div className="flex items-center gap-1.5 w-full sm:w-auto pt-2 sm:pt-0 sm:ml-auto">
               <button
                 type="button"
-                onClick={() => setIsAuthModalOpen(true)}
-                className="px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 hover:text-slate-900 hover:bg-slate-100 text-xs font-bold flex items-center gap-1 transition-all"
-                title="Switch staff account"
+                onClick={() => {
+                  setAuthStep('credentials');
+                  setAuthError(null);
+                  setIsAuthModalOpen(true);
+                }}
+                className="flex-1 sm:flex-none px-2.5 py-2 rounded-xl bg-white border border-slate-300 text-slate-700 hover:text-slate-900 hover:bg-slate-100 text-xs font-bold flex items-center justify-center gap-1.5 transition-all shadow-2xs"
+                title="Switch staff account via 5-digit WhatsApp verification"
               >
                 <Lock className="w-3.5 h-3.5 text-amber-700" />
                 <span>Switch User</span>
               </button>
 
-              {currentStaff?.role === 'admin' && (
-                <button
-                  type="button"
-                  onClick={() => setIsNewStaffModalOpen(true)}
-                  className="px-2.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold flex items-center gap-1 transition-all"
-                  title="Add new staff account"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>+ Staff</span>
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setIsNewStaffModalOpen(true)}
+                className="flex-1 sm:flex-none px-3 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-black flex items-center justify-center gap-1 shadow-xs transition-all active:scale-95"
+                title="Admin registers user details with phone number"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Staff</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setShowStaffDirectory(!showStaffDirectory)}
+                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-colors"
+                title="View registered staff & phone numbers"
+              >
+                <Users className="w-4 h-4 text-slate-600" />
+              </button>
             </div>
           </div>
         </div>
 
+        {/* Expandable Staff & Store Users Directory with WhatsApp Numbers */}
+        {showStaffDirectory && (
+          <div className="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-200 text-xs space-y-2">
+            <div className="flex items-center justify-between font-bold text-amber-950">
+              <span className="flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-amber-700" />
+                <span>Registered Staff & Store Officers Directory (WhatsApp Verified)</span>
+              </span>
+              <button
+                onClick={() => setShowStaffDirectory(false)}
+                className="text-amber-800 hover:text-amber-950 font-bold"
+              >
+                Close ✕
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+              {(pricing.staffAccounts || INITIAL_STAFF_ACCOUNTS).map((acc) => (
+                <div
+                  key={acc.id}
+                  className="bg-white p-2.5 rounded-xl border border-amber-200 shadow-2xs flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-black text-slate-900 truncate">{acc.name}</span>
+                      <span className="text-[9px] uppercase font-mono font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-900">
+                        {acc.role.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-500 font-mono block">@{acc.username}</span>
+                  </div>
+                  <div className="mt-2 pt-1.5 border-t border-slate-100 flex items-center justify-between text-[11px]">
+                    <span className="font-mono font-bold text-emerald-800 flex items-center gap-1">
+                      <Phone className="w-3 h-3 text-emerald-600" />
+                      +{acc.phone ? normalizePhoneNumber(acc.phone) : '2348060395329'}
+                    </span>
+                    <a
+                      href={`https://wa.me/${acc.phone ? normalizePhoneNumber(acc.phone) : '2348060395329'}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[10px] text-emerald-700 hover:underline font-bold flex items-center gap-0.5"
+                    >
+                      <MessageSquare className="w-2.5 h-2.5" />
+                      <span>Chat</span>
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Live Nigeria Black Market FX Peg Engine */}
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50 to-slate-50 border border-emerald-300/80 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50 to-slate-50 border border-emerald-300/80 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
           <div className="space-y-1">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-200 text-emerald-950 border border-emerald-400">
                 <TrendingUp className="w-3 h-3 text-emerald-800" />
                 <span>Live Nigeria Black Market Parallel FX Peg</span>
@@ -494,8 +633,8 @@ export const AdminPricingManager: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 bg-white border border-emerald-400 rounded-xl px-3 py-1.5 shadow-2xs">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2.5">
+            <div className="flex items-center justify-between sm:justify-start gap-2 bg-white border border-emerald-400 rounded-xl px-3 py-1.5 shadow-2xs">
               <span className="text-xs font-black text-slate-700 whitespace-nowrap">
                 Black Market FX Rate:
               </span>
@@ -515,7 +654,7 @@ export const AdminPricingManager: React.FC = () => {
             <button
               type="button"
               onClick={handleRecalculateAllUsd}
-              className="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all active:scale-95"
+              className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95"
             >
               <RefreshCw className="w-3.5 h-3.5" />
               <span>Sync All USD Prices</span>
@@ -525,7 +664,7 @@ export const AdminPricingManager: React.FC = () => {
 
         {/* Global Save and Reset Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-          <div className="text-xs text-slate-500">
+          <div className="text-xs text-slate-500 leading-tight">
             Last published: <strong className="text-slate-800">{pricing.updatedAt ? new Date(pricing.updatedAt).toLocaleString() : 'Recent'}</strong> by{' '}
             <strong className="text-slate-800">{pricing.updatedBy}</strong>
           </div>
@@ -534,7 +673,7 @@ export const AdminPricingManager: React.FC = () => {
             <button
               type="button"
               onClick={() => setConfirmReset(true)}
-              className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center gap-1.5 border border-slate-300 transition-colors"
+              className="flex-1 sm:flex-none px-3 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center gap-1.5 border border-slate-300 transition-colors"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Reset Defaults</span>
@@ -544,7 +683,7 @@ export const AdminPricingManager: React.FC = () => {
               type="button"
               onClick={() => handleSaveAll()}
               disabled={isSaving}
-              className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-black text-xs flex items-center gap-2 shadow-md shadow-orange-600/20 transition-all disabled:opacity-50"
+              className="flex-1 sm:flex-none px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-md shadow-orange-600/20 transition-all disabled:opacity-50"
             >
               {isSaving ? (
                 <>
@@ -579,14 +718,14 @@ export const AdminPricingManager: React.FC = () => {
               <button
                 type="button"
                 onClick={handleReset}
-                className="px-3 py-1 bg-amber-700 hover:bg-amber-800 text-white font-bold rounded-lg"
+                className="px-3 py-1.5 bg-amber-700 hover:bg-amber-800 text-white font-bold rounded-lg text-xs"
               >
                 Yes, Restore Factory Defaults
               </button>
               <button
                 type="button"
                 onClick={() => setConfirmReset(false)}
-                className="px-3 py-1 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold rounded-lg"
+                className="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold rounded-lg text-xs"
               >
                 Cancel
               </button>
@@ -596,7 +735,7 @@ export const AdminPricingManager: React.FC = () => {
       </div>
 
       {/* SECTION 1: SOFTWARE PLANS PRICING MATRIX */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4">
         <div className="flex items-center justify-between pb-3 border-b border-slate-200">
           <div>
             <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
@@ -609,9 +748,9 @@ export const AdminPricingManager: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
           {/* Basic Plan */}
-          <div className="bg-slate-50 border border-slate-300/80 rounded-2xl p-4 space-y-3.5">
+          <div className="bg-slate-50 border border-slate-300/80 rounded-2xl p-3.5 sm:p-4 space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-slate-200">
               <div>
                 <span className="text-[10px] font-mono font-bold uppercase text-slate-500">Plan 01</span>
@@ -726,7 +865,7 @@ export const AdminPricingManager: React.FC = () => {
           </div>
 
           {/* Standard Plan */}
-          <div className="bg-amber-50/50 border border-amber-300 rounded-2xl p-4 space-y-3.5 relative shadow-xs">
+          <div className="bg-amber-50/50 border border-amber-300 rounded-2xl p-3.5 sm:p-4 space-y-3 relative shadow-xs">
             <div className="flex items-center justify-between pb-2 border-b border-amber-200">
               <div>
                 <span className="text-[10px] font-mono font-bold uppercase text-amber-800">Plan 02 • Recommended</span>
@@ -841,7 +980,7 @@ export const AdminPricingManager: React.FC = () => {
           </div>
 
           {/* Enterprises Plan */}
-          <div className="bg-purple-50/40 border border-purple-300 rounded-2xl p-4 space-y-3.5">
+          <div className="bg-purple-50/40 border border-purple-300 rounded-2xl p-3.5 sm:p-4 space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-purple-200">
               <div>
                 <span className="text-[10px] font-mono font-bold uppercase text-purple-800">Plan 03 • Flagship</span>
@@ -957,8 +1096,144 @@ export const AdminPricingManager: React.FC = () => {
         </div>
       </div>
 
+      {/* SECTION: GOOGLE DRIVE SOFTWARE DOWNLOAD LINKS */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200">
+          <div>
+            <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
+              <div className="w-5 h-5 flex items-center justify-center">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                  <path d="M7.71 3.5L1.15 15l3.43 6 6.55-11.5-3.42-6z" fill="#0066DA"/>
+                  <path d="M16.29 3.5h-8.58l6.55 11.5h8.59l-6.56-11.5z" fill="#00AC47"/>
+                  <path d="M22.85 15H9.71l-3.43 6h13.14l3.43-6z" fill="#EA4335"/>
+                </svg>
+              </div>
+              <span>Google Drive Software Download Links (Linked to Web Page)</span>
+            </h4>
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              Each software plan's download button on the public website links directly to its Google Drive folder/installer for visitors.
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4">
+          {/* Master All-in-One Download Link */}
+          <div className="col-span-full p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black text-amber-950 flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Master All-in-One Suite Google Drive Link (Linked to Download Page):</span>
+              </span>
+              <a
+                href={pricing.driveLinks?.allInOne || 'https://drive.google.com/drive/folders/1sLwLpP_Kaylix_Kitchen_AllInOne_POS_Suite_v342?usp=sharing'}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[10px] text-amber-800 hover:underline font-bold flex items-center gap-0.5"
+              >
+                <span>Test Link</span>
+                <ExternalLink className="w-2.5 h-2.5" />
+              </a>
+            </div>
+            <input
+              type="url"
+              value={pricing.driveLinks?.allInOne || 'https://drive.google.com/drive/folders/1sLwLpP_Kaylix_Kitchen_AllInOne_POS_Suite_v342?usp=sharing'}
+              onChange={(e) => handleDriveLinkChange('allInOne', e.target.value)}
+              className="w-full bg-white border border-amber-400 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-amber-600 shadow-2xs"
+            />
+          </div>
+
+          {/* Trial Drive Link */}
+          <div className="p-3.5 bg-blue-50/50 border border-blue-200 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black text-blue-950">Trial 7-Day Plan Google Drive Link:</span>
+              <a
+                href={pricing.driveLinks?.trial || 'https://drive.google.com/drive/folders/1sLwLpP_Kaylix_Trial_POS_v342?usp=sharing'}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[10px] text-blue-700 hover:underline font-bold flex items-center gap-0.5"
+              >
+                <span>Test Link</span>
+                <ExternalLink className="w-2.5 h-2.5" />
+              </a>
+            </div>
+            <input
+              type="url"
+              value={pricing.driveLinks?.trial || 'https://drive.google.com/drive/folders/1sLwLpP_Kaylix_Trial_POS_v342?usp=sharing'}
+              onChange={(e) => handleDriveLinkChange('trial', e.target.value)}
+              className="w-full bg-white border border-blue-300 rounded-xl px-3 py-2 text-xs font-mono font-medium text-slate-900 focus:outline-none focus:border-blue-600"
+            />
+          </div>
+
+          {/* Basic Drive Link */}
+          <div className="p-3.5 bg-slate-50 border border-slate-300/80 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black text-slate-900">Basic Plan Google Drive Link:</span>
+              <a
+                href={pricing.driveLinks?.basic || 'https://drive.google.com/drive/folders/1kAx_Kaylix_Basic_POS_1Counter_2Handheld?usp=sharing'}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[10px] text-amber-700 hover:underline font-bold flex items-center gap-0.5"
+              >
+                <span>Test Link</span>
+                <ExternalLink className="w-2.5 h-2.5" />
+              </a>
+            </div>
+            <input
+              type="url"
+              value={pricing.driveLinks?.basic || 'https://drive.google.com/drive/folders/1kAx_Kaylix_Basic_POS_1Counter_2Handheld?usp=sharing'}
+              onChange={(e) => handleDriveLinkChange('basic', e.target.value)}
+              className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs font-mono font-medium text-slate-900 focus:outline-none focus:border-amber-600"
+            />
+          </div>
+
+          {/* Standard Drive Link */}
+          <div className="p-3.5 bg-amber-50/50 border border-amber-300 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black text-amber-950">Standard Plan Google Drive Link:</span>
+              <a
+                href={pricing.driveLinks?.standard || 'https://drive.google.com/drive/folders/1mYz_Kaylix_Standard_POS_MultiUser_KDS?usp=sharing'}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[10px] text-amber-800 hover:underline font-bold flex items-center gap-0.5"
+              >
+                <span>Test Link</span>
+                <ExternalLink className="w-2.5 h-2.5" />
+              </a>
+            </div>
+            <input
+              type="url"
+              value={pricing.driveLinks?.standard || 'https://drive.google.com/drive/folders/1mYz_Kaylix_Standard_POS_MultiUser_KDS?usp=sharing'}
+              onChange={(e) => handleDriveLinkChange('standard', e.target.value)}
+              className="w-full bg-white border border-amber-300 rounded-xl px-3 py-2 text-xs font-mono font-medium text-slate-900 focus:outline-none focus:border-amber-600"
+            />
+          </div>
+
+          {/* Enterprise Drive Link */}
+          <div className="p-3.5 bg-purple-50/50 border border-purple-200 rounded-2xl space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black text-purple-950">Enterprises Flagship Google Drive Link:</span>
+              <a
+                href={pricing.driveLinks?.enterprise || 'https://drive.google.com/drive/folders/1eNp_Kaylix_Enterprise_POS_CloudHQ?usp=sharing'}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[10px] text-purple-700 hover:underline font-bold flex items-center gap-0.5"
+              >
+                <span>Test Link</span>
+                <ExternalLink className="w-2.5 h-2.5" />
+              </a>
+            </div>
+            <input
+              type="url"
+              value={pricing.driveLinks?.enterprise || 'https://drive.google.com/drive/folders/1eNp_Kaylix_Enterprise_POS_CloudHQ?usp=sharing'}
+              onChange={(e) => handleDriveLinkChange('enterprise', e.target.value)}
+              className="w-full bg-white border border-purple-200 rounded-xl px-3 py-2 text-xs font-mono font-medium text-slate-900 focus:outline-none focus:border-purple-600"
+            />
+          </div>
+        </div>
+      </div>
+
       {/* SECTION 2: POS HARDWARE ADD-ONS & INVENTORY AVAILABILITY */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
           <div>
             <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
@@ -970,12 +1245,11 @@ export const AdminPricingManager: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Filter */}
+          <div className="flex items-center gap-2 flex-wrap">
             <select
               value={hardwareFilter}
               onChange={(e) => setHardwareFilter(e.target.value)}
-              className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none"
+              className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 focus:outline-none flex-1 sm:flex-none"
             >
               <option value="all">All Devices ({pricing.hardwareItems.length})</option>
               <option value="in_stock">In Stock</option>
@@ -1004,16 +1278,16 @@ export const AdminPricingManager: React.FC = () => {
                 });
                 setIsAddHardwareModalOpen(true);
               }}
-              className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all active:scale-95"
+              className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95 flex-1 sm:flex-none"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>+ Add New POS Device</span>
+              <span>+ Add POS Device</span>
             </button>
           </div>
         </div>
 
         {/* Hardware Devices Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4">
           {filteredHardware.map((item) => {
             const Icon = getCategoryIcon(item.category);
             const isOut = item.availability === 'out_of_stock';
@@ -1023,7 +1297,7 @@ export const AdminPricingManager: React.FC = () => {
             return (
               <div
                 key={item.id}
-                className={`p-4 rounded-2xl border transition-all flex flex-col justify-between ${
+                className={`p-3.5 sm:p-4 rounded-2xl border transition-all flex flex-col justify-between ${
                   isOut
                     ? 'bg-slate-100/70 border-slate-300 opacity-75'
                     : 'bg-slate-50 border-slate-300/80 hover:bg-white hover:shadow-xs'
@@ -1035,11 +1309,11 @@ export const AdminPricingManager: React.FC = () => {
                       <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
                         <Icon className="w-4 h-4" />
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">
                           {item.category}
                         </span>
-                        <h5 className="text-xs font-black text-slate-900 leading-snug">{item.name}</h5>
+                        <h5 className="text-xs font-black text-slate-900 leading-snug truncate">{item.name}</h5>
                       </div>
                     </div>
 
@@ -1059,7 +1333,7 @@ export const AdminPricingManager: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="space-y-3 pt-2 border-t border-slate-200">
+                <div className="space-y-2.5 pt-2 border-t border-slate-200">
                   {/* Availability Dropdown */}
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-[11px] font-bold text-slate-600">Stock Availability:</span>
@@ -1089,7 +1363,7 @@ export const AdminPricingManager: React.FC = () => {
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <span className="text-[10px] font-bold text-slate-500 block mb-0.5">Price NGN</span>
-                      <div className="flex items-center bg-white border border-slate-300 rounded-xl px-2 py-1 focus-within:border-emerald-600">
+                      <div className="flex items-center bg-white border border-slate-300 rounded-xl px-2 py-1.5 focus-within:border-emerald-600">
                         <span className="text-xs font-bold text-slate-400 mr-1">₦</span>
                         <input
                           type="number"
@@ -1107,7 +1381,7 @@ export const AdminPricingManager: React.FC = () => {
                       <span className="text-[10px] font-bold text-slate-500 block mb-0.5">
                         Price USD (Auto)
                       </span>
-                      <div className="flex items-center bg-white border border-slate-300 rounded-xl px-2 py-1 focus-within:border-emerald-600">
+                      <div className="flex items-center bg-white border border-slate-300 rounded-xl px-2 py-1.5 focus-within:border-emerald-600">
                         <span className="text-xs font-bold text-slate-400 mr-1">$</span>
                         <input
                           type="number"
@@ -1154,7 +1428,7 @@ export const AdminPricingManager: React.FC = () => {
       </div>
 
       {/* SECTION 3: IMMUTABLE PRICING & HARDWARE AUDIT LOG (WITH TIMESTAMPS) */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
           <div>
             <h4 className="text-sm font-black text-slate-900 uppercase tracking-wider flex items-center gap-2">
@@ -1162,15 +1436,15 @@ export const AdminPricingManager: React.FC = () => {
               <span>3. Timestamped Pricing & Hardware Modification Audit Log</span>
             </h4>
             <p className="text-xs text-slate-500 font-medium mt-0.5">
-              Complete traceable record of every pricing modification, hardware addition, and FX change with staff username & timestamp.
+              Traceable records of every pricing modification, hardware addition, and phone verification with staff username & timestamp.
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <select
               value={auditFilter}
               onChange={(e) => setAuditFilter(e.target.value)}
-              className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none"
+              className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-700 focus:outline-none flex-1 sm:flex-none"
             >
               <option value="all">All Audit Actions</option>
               <option value="price_update">Price Updates</option>
@@ -1183,7 +1457,7 @@ export const AdminPricingManager: React.FC = () => {
 
             <a
               href="/api/pricing/audit/csv"
-              className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all"
+              className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-all flex-1 sm:flex-none justify-center"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Export CSV</span>
@@ -1192,8 +1466,8 @@ export const AdminPricingManager: React.FC = () => {
         </div>
 
         {/* Audit Log Table */}
-        <div className="overflow-x-auto rounded-xl border border-slate-200">
-          <table className="w-full text-left border-collapse text-xs">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 -mx-1 sm:mx-0">
+          <table className="w-full text-left border-collapse text-xs min-w-[620px]">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 font-black uppercase text-[10px] tracking-wider">
                 <th className="py-2.5 px-3">Timestamp (WAT)</th>
@@ -1251,173 +1525,324 @@ export const AdminPricingManager: React.FC = () => {
         </div>
       </div>
 
-      {/* ========================================================
-          MODAL: SWITCH / AUTHENTICATE STAFF USERNAME & PASSWORD
-      ======================================================== */}
+      {/* =========================================================================
+          2ND ATTACHED IMAGE: STAFF SIGN-IN VIA 5-DIGIT WHATSAPP VERIFICATION CODE
+      ========================================================================= */}
       {isAuthModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl border border-slate-200 space-y-4 max-h-[92vh] overflow-y-auto">
+            {/* Header */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
-                  <Lock className="w-4 h-4" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-2xl bg-amber-100 text-amber-900 flex items-center justify-center font-bold shadow-2xs">
+                  <MessageSquare className="w-5 h-5 text-emerald-600" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-black text-slate-900">Staff Account Sign-In</h4>
-                  <span className="text-[10px] text-slate-500">Authenticate session to record audit trail</span>
+                  <h4 className="text-sm sm:text-base font-black text-slate-900">
+                    {authStep === 'credentials' ? 'Staff Account Sign-In' : 'WhatsApp 5-Digit Verification'}
+                  </h4>
+                  <span className="text-[11px] text-slate-500 block leading-tight">
+                    {authStep === 'credentials'
+                      ? 'Enter Username & WhatsApp Phone Number'
+                      : `Enter 5-digit code sent to WhatsApp (+${dispatchedPhone})`}
+                  </span>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsAuthModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {authError && (
-              <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-800 flex items-center gap-2">
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-800 flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-                <span>{authError}</span>
+                <span className="leading-snug">{authError}</span>
               </div>
             )}
 
-            <form onSubmit={handleStaffLogin} className="space-y-3">
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Username:</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. admin or store_manager"
-                  value={authUsername}
-                  onChange={(e) => setAuthUsername(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-600"
-                />
-              </div>
+            {/* STEP 1: Enter Username & Phone Number */}
+            {authStep === 'credentials' && (
+              <form onSubmit={handleRequestWhatsAppCode} className="space-y-3.5">
+                <div>
+                  <label className="text-xs font-bold text-slate-800 block mb-1">
+                    Staff Username:
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. admin or store_manager"
+                    value={authUsername}
+                    onChange={(e) => setAuthUsername(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-600 focus:bg-white"
+                  />
+                </div>
 
-              <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Password:</label>
-                <input
-                  type="password"
-                  required
-                  placeholder="Enter account password"
-                  value={authPassword}
-                  onChange={(e) => setAuthPassword(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-amber-600"
-                />
-              </div>
+                <div>
+                  <label className="text-xs font-bold text-slate-800 block mb-1 flex items-center justify-between">
+                    <span>Registered WhatsApp Phone Number:</span>
+                    <span className="text-[10px] text-emerald-700 font-mono font-bold">Nigeria (+234)</span>
+                  </label>
+                  <div className="flex items-center bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 focus-within:border-emerald-600 focus-within:bg-white">
+                    <span className="text-xs font-mono font-bold text-slate-400 mr-1.5 flex items-center gap-1">
+                      <span>🇳🇬</span>
+                      <span>+234</span>
+                    </span>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="e.g. 08060395329"
+                      value={authPhone}
+                      onChange={(e) => setAuthPhone(e.target.value)}
+                      className="w-full text-xs font-mono font-bold text-slate-900 focus:outline-none bg-transparent"
+                    />
+                  </div>
+                  <span className="text-[10px] text-slate-500 mt-1 block">
+                    System will send a secure 5-digit verification code to this WhatsApp number.
+                  </span>
+                </div>
 
-              {/* Preconfigured Credentials Quick Fill Card */}
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5 text-[11px]">
-                <span className="font-bold text-slate-700 block">Pre-Provisioned Staff Accounts:</span>
-                <div className="grid grid-cols-1 gap-1 text-slate-600 font-mono text-[10px]">
-                  <div
-                    onClick={() => {
-                      setAuthUsername('admin');
-                      setAuthPassword('Admin@Kaylix2026');
-                    }}
-                    className="p-1.5 rounded bg-white border border-slate-200 cursor-pointer hover:border-amber-500 flex justify-between"
-                  >
-                    <span><strong>admin</strong> / Admin@Kaylix2026</span>
-                    <span className="text-amber-800 font-sans font-bold">Fill Lead Admin</span>
-                  </div>
-                  <div
-                    onClick={() => {
-                      setAuthUsername('store_manager');
-                      setAuthPassword('Store@Kaylix2026');
-                    }}
-                    className="p-1.5 rounded bg-white border border-slate-200 cursor-pointer hover:border-amber-500 flex justify-between"
-                  >
-                    <span><strong>store_manager</strong> / Store@Kaylix2026</span>
-                    <span className="text-amber-800 font-sans font-bold">Fill Store Manager</span>
-                  </div>
-                  <div
-                    onClick={() => {
-                      setAuthUsername('pricing_desk');
-                      setAuthPassword('Desk@Kaylix2026');
-                    }}
-                    className="p-1.5 rounded bg-white border border-slate-200 cursor-pointer hover:border-amber-500 flex justify-between"
-                  >
-                    <span><strong>pricing_desk</strong> / Desk@Kaylix2026</span>
-                    <span className="text-amber-800 font-sans font-bold">Fill Pricing Desk</span>
+                {/* Pre-Provisioned Quick-Select Profiles */}
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5 text-[11px]">
+                  <span className="font-bold text-slate-700 block">Pre-Provisioned Staff Profiles:</span>
+                  <div className="grid grid-cols-1 gap-1.5 text-slate-600 font-mono text-[10px]">
+                    <div
+                      onClick={() => {
+                        setAuthUsername('admin');
+                        setAuthPhone('08060395329');
+                      }}
+                      className="p-2 rounded-lg bg-white border border-slate-200 cursor-pointer hover:border-amber-500 flex items-center justify-between transition-colors shadow-2xs"
+                    >
+                      <div>
+                        <strong className="text-slate-900 block font-sans">Lead Administrator (@admin)</strong>
+                        <span className="text-slate-500">WhatsApp: +234 806 039 5329</span>
+                      </div>
+                      <span className="text-amber-800 font-sans font-bold text-xs">Select</span>
+                    </div>
+
+                    <div
+                      onClick={() => {
+                        setAuthUsername('store_manager');
+                        setAuthPhone('08060395329');
+                      }}
+                      className="p-2 rounded-lg bg-white border border-slate-200 cursor-pointer hover:border-amber-500 flex items-center justify-between transition-colors shadow-2xs"
+                    >
+                      <div>
+                        <strong className="text-slate-900 block font-sans">Central Store Manager (@store_manager)</strong>
+                        <span className="text-slate-500">WhatsApp: +234 806 039 5329</span>
+                      </div>
+                      <span className="text-amber-800 font-sans font-bold text-xs">Select</span>
+                    </div>
+
+                    <div
+                      onClick={() => {
+                        setAuthUsername('pricing_desk');
+                        setAuthPhone('08060395329');
+                      }}
+                      className="p-2 rounded-lg bg-white border border-slate-200 cursor-pointer hover:border-amber-500 flex items-center justify-between transition-colors shadow-2xs"
+                    >
+                      <div>
+                        <strong className="text-slate-900 block font-sans">Pricing Desk Officer (@pricing_desk)</strong>
+                        <span className="text-slate-500">WhatsApp: +234 806 039 5329</span>
+                      </div>
+                      <span className="text-amber-800 font-sans font-bold text-xs">Select</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="pt-2 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsAuthModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-black rounded-xl shadow-xs"
-                >
-                  Authenticate Session
-                </button>
-              </div>
-            </form>
+                <div className="pt-2 flex items-center justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsAuthModalOpen(false)}
+                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isSendingOtp}
+                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black rounded-xl shadow-xs flex items-center gap-1.5 transition-all disabled:opacity-50"
+                  >
+                    {isSendingOtp ? (
+                      <>
+                        <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Sending WhatsApp Code...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-3.5 h-3.5" />
+                        <span>Send 5-Digit WhatsApp Code</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* STEP 2: Enter 5-Digit WhatsApp Access Code */}
+            {authStep === 'enter_code' && (
+              <form onSubmit={handleVerifyWhatsAppCode} className="space-y-4">
+                <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-2xl space-y-2">
+                  <div className="flex items-center gap-2 text-xs font-bold text-emerald-950">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>5-Digit security code dispatched to WhatsApp!</span>
+                  </div>
+                  <p className="text-[11px] text-emerald-900">
+                    Sent to: <strong className="font-mono">+{dispatchedPhone}</strong> (@{authUsername})
+                  </p>
+
+                  {/* Direct WhatsApp Open Link Button */}
+                  {dispatchedWhatsappUrl && (
+                    <a
+                      href={dispatchedWhatsappUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-700 text-white font-bold text-xs hover:bg-emerald-800 transition-colors shadow-2xs"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      <span>Open WhatsApp to View Code</span>
+                      <ExternalLink className="w-3 h-3 ml-0.5" />
+                    </a>
+                  )}
+
+                  {/* Quick-fill button in preview environment */}
+                  {dispatchedCode && (
+                    <button
+                      type="button"
+                      onClick={() => setAuthCode(dispatchedCode)}
+                      className="text-[10px] font-mono font-bold text-emerald-800 underline block mt-1 hover:text-emerald-950"
+                    >
+                      ⚡ Quick Autofill Code: {dispatchedCode}
+                    </button>
+                  )}
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-800 block mb-1.5 text-center">
+                    Enter the 5-Digit Access Code:
+                  </label>
+                  <div className="flex justify-center">
+                    <input
+                      type="text"
+                      maxLength={5}
+                      autoFocus
+                      required
+                      placeholder="• • • • •"
+                      value={authCode}
+                      onChange={(e) => setAuthCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 5))}
+                      className="w-48 text-center tracking-[0.5em] font-mono font-black text-2xl py-2.5 px-3 bg-slate-50 border-2 border-amber-500 rounded-2xl text-slate-900 focus:outline-none focus:ring-4 focus:ring-amber-400/30"
+                    />
+                  </div>
+                  <span className="text-[10px] text-slate-400 text-center block mt-1.5">
+                    Valid for 10 minutes • Code example: 5-digit number
+                  </span>
+                </div>
+
+                <div className="pt-2 flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthStep('credentials');
+                      setAuthError(null);
+                    }}
+                    className="text-xs text-slate-500 hover:text-slate-800 font-bold underline"
+                  >
+                    ← Change Phone / User
+                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsAuthModalOpen(false)}
+                      className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl"
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      type="submit"
+                      disabled={isVerifyingOtp || authCode.length < 5}
+                      className="px-5 py-2 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white text-xs font-black rounded-xl shadow-xs flex items-center gap-1.5 transition-all disabled:opacity-50"
+                    >
+                      {isVerifyingOtp ? (
+                        <>
+                          <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          <span>Verifying...</span>
+                        </>
+                      ) : (
+                        <>
+                          <KeyRound className="w-3.5 h-3.5" />
+                          <span>Unlock Portal</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}
 
-      {/* ========================================================
-          MODAL: ADMIN CREATES NEW STAFF / STORE ACCOUNT
-      ======================================================== */}
+      {/* =========================================================================
+          1ST ATTACHED IMAGE: ADMIN REGISTERS USERS DETAILS WITH THEIR PHONE NUMBER
+      ========================================================================= */}
       {isNewStaffModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-md w-full shadow-2xl border border-slate-200 space-y-4 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold">
-                  <User className="w-4 h-4" />
+                <div className="w-9 h-9 rounded-2xl bg-purple-100 text-purple-800 flex items-center justify-center font-bold shadow-2xs">
+                  <User className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-black text-slate-900">Create Staff / Store User</h4>
-                  <span className="text-[10px] text-slate-500">Provide distinct credentials with role</span>
+                  <h4 className="text-sm sm:text-base font-black text-slate-900">Register Staff / Store User</h4>
+                  <span className="text-[10px] text-slate-500">Record officer profile with confirmed phone number</span>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsNewStaffModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateStaff} className="space-y-3">
+            <form onSubmit={handleCreateStaff} className="space-y-3.5">
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Full Staff / Store Name:</label>
+                <label className="text-xs font-bold text-slate-800 block mb-1">
+                  Full Officer / Store Name:
+                </label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. Lekki Store Supervisor"
                   value={newStaffForm.name}
                   onChange={(e) => setNewStaffForm({ ...newStaffForm, name: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-purple-600"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-purple-600 focus:bg-white"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Username:</label>
+                  <label className="text-xs font-bold text-slate-800 block mb-1">Username:</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. lekki_store"
                     value={newStaffForm.username}
                     onChange={(e) => setNewStaffForm({ ...newStaffForm, username: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-purple-600"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-purple-600 focus:bg-white"
                   />
                 </div>
 
                 <div>
-                  <label className="text-xs font-bold text-slate-700 block mb-1">Role:</label>
+                  <label className="text-xs font-bold text-slate-800 block mb-1">Assigned Role:</label>
                   <select
                     value={newStaffForm.role}
                     onChange={(e) =>
@@ -1426,7 +1851,7 @@ export const AdminPricingManager: React.FC = () => {
                         role: e.target.value as 'admin' | 'store_manager' | 'pricing_officer',
                       })
                     }
-                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-purple-600"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:border-purple-600 focus:bg-white"
                   >
                     <option value="store_manager">Store Manager</option>
                     <option value="pricing_officer">Pricing Officer</option>
@@ -1435,15 +1860,41 @@ export const AdminPricingManager: React.FC = () => {
                 </div>
               </div>
 
+              {/* MANDATORY WHATSAPP PHONE NUMBER */}
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Password:</label>
+                <label className="text-xs font-bold text-slate-800 block mb-1 flex items-center justify-between">
+                  <span>WhatsApp Phone Number (Required):</span>
+                  <span className="text-[10px] text-emerald-700 font-mono font-bold">Nigeria (+234)</span>
+                </label>
+                <div className="flex items-center bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus-within:border-emerald-600 focus-within:bg-white">
+                  <span className="text-xs font-mono font-bold text-slate-400 mr-1.5 flex items-center gap-1">
+                    <span>🇳🇬</span>
+                    <span>+234</span>
+                  </span>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="e.g. 08060395329"
+                    value={newStaffForm.phone}
+                    onChange={(e) => setNewStaffForm({ ...newStaffForm, phone: e.target.value })}
+                    className="w-full text-xs font-mono font-bold text-slate-900 focus:outline-none bg-transparent"
+                  />
+                </div>
+                <span className="text-[10px] text-slate-500 mt-1 block">
+                  Staff member will receive 5-digit verification codes at this phone number to access the portal.
+                </span>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-800 block mb-1">
+                  Initial Passcode / Secret:
+                </label>
                 <input
                   type="password"
-                  required
-                  placeholder="Create strong password"
+                  placeholder="Default: Staff@2026"
                   value={newStaffForm.password}
                   onChange={(e) => setNewStaffForm({ ...newStaffForm, password: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-purple-600"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-purple-600 focus:bg-white"
                 />
               </div>
 
@@ -1451,15 +1902,15 @@ export const AdminPricingManager: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsNewStaffModalOpen(false)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl"
+                  className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-black rounded-xl shadow-xs"
+                  className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-black rounded-xl shadow-xs transition-all active:scale-95"
                 >
-                  Create Staff Account
+                  Register User with Phone
                 </button>
               </div>
             </form>
@@ -1467,19 +1918,19 @@ export const AdminPricingManager: React.FC = () => {
         </div>
       )}
 
-      {/* ========================================================
+      {/* =========================================================================
           MODAL: ADD / EDIT POS HARDWARE DEVICE & TECHNOLOGY
-      ======================================================== */}
+      ========================================================================= */}
       {isAddHardwareModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
-          <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-slate-200 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-lg w-full shadow-2xl border border-slate-200 space-y-4 max-h-[92vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
-                  <Monitor className="w-4 h-4" />
+                <div className="w-9 h-9 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold shadow-2xs">
+                  <Monitor className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-black text-slate-900">
+                  <h4 className="text-sm sm:text-base font-black text-slate-900">
                     {editingHardwareId ? 'Edit POS Hardware Device' : 'Add New POS Technology / Device'}
                   </h4>
                   <span className="text-[10px] text-slate-500">
@@ -1490,7 +1941,7 @@ export const AdminPricingManager: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsAddHardwareModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>

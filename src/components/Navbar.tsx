@@ -2,7 +2,7 @@ import React from 'react';
 import { UtensilsCrossed, Download, MessageSquare, PhoneCall, Smartphone, Monitor, Package, Building2, Flame } from 'lucide-react';
 import { VENDOR_CONTACT } from '../data/mockData';
 
-export type PageType = 'tour' | 'plan' | 'banks' | 'order';
+export type PageType = 'tour' | 'plan' | 'download' | 'banks' | 'order';
 
 interface NavbarProps {
   currency: 'NGN' | 'USD';
@@ -99,6 +99,18 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <Package className="w-3.5 h-3.5 text-amber-600" />
             <span>Plan Packages</span>
+          </button>
+
+          <button
+            onClick={() => onNavigateToPage('download')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+              currentPage === 'download'
+                ? 'bg-amber-100 text-amber-950 font-bold shadow-2xs'
+                : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
+            }`}
+          >
+            <Download className="w-3.5 h-3.5 text-amber-600" />
+            <span>Download</span>
           </button>
 
           <button

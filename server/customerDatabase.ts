@@ -24,7 +24,7 @@ const INITIAL_SEEDS: CustomerRecord[] = [
     tenureLabel: 'Perpetual Lifetime',
     amountPaid: 200000,
     currency: 'NGN',
-    licenseCode: 'KYLX-ENT-2026-92F1-999T-FF-B491-03D8',
+    licenseCode: 'ENTR-9B41D-5F72A-LF-9E41',
     status: 'active',
     selectedAddons: ['thermal-printer-80mm', 'cash-drawer-rj11', 'barcode-scanner-2d'],
     deploymentType: 'onsite',
@@ -46,7 +46,7 @@ const INITIAL_SEEDS: CustomerRecord[] = [
     tenureLabel: '3 Years License',
     amountPaid: 57000,
     currency: 'NGN',
-    licenseCode: 'KYLX-STD-2026-44B2-3T-8F-912A-44C1',
+    licenseCode: 'STND-3A9F1-7C42E-3Y-8F21',
     status: 'active',
     selectedAddons: ['thermal-printer-80mm'],
     deploymentType: 'remote',
@@ -68,7 +68,7 @@ const INITIAL_SEEDS: CustomerRecord[] = [
     tenureLabel: '1 Year License',
     amountPaid: 10000,
     currency: 'NGN',
-    licenseCode: 'KYLX-BSC-2026-11C8-1T-03-38DF-77B2',
+    licenseCode: 'BASC-4D7A1-8E29F-1Y-C83E',
     status: 'active',
     selectedAddons: [],
     deploymentType: 'remote',
@@ -112,7 +112,7 @@ const INITIAL_SEEDS: CustomerRecord[] = [
     tenureLabel: '7-Day Free Evaluation',
     amountPaid: 0,
     currency: 'NGN',
-    licenseCode: 'KYLX-TRL-2026-FREE-1T-01-08AB-71C9',
+    licenseCode: 'TRAL-7F12A-3D90E-7D-4A12',
     status: 'active',
     selectedAddons: [],
     deploymentType: 'self',
@@ -172,11 +172,13 @@ export function createCustomerRecord(data: Partial<CustomerRecord>): CustomerRec
 
   // Auto-generate license code or assign pending
   let assignedLicenseCode = data.licenseCode || 'Pending Generation';
-  if (!data.licenseCode && (data.edition === 'trial' || data.status === 'active')) {
+  if (data.edition === 'none') {
+    assignedLicenseCode = 'N/A (Hardware Only - No License Needed)';
+  } else if (!data.licenseCode && (data.edition === 'trial' || data.status === 'active')) {
     try {
       const generated = generateServerMasterKey({
         businessName: data.businessName || 'Kaylix Eatery Client',
-        edition: data.edition || 'basic',
+        edition: (data.edition as EditionType) || 'basic',
         validityDays,
         terminalLimit: data.edition === 'enterprise' ? 999 : data.edition === 'standard' ? 3 : 1,
       });
@@ -193,10 +195,10 @@ export function createCustomerRecord(data: Partial<CustomerRecord>): CustomerRec
     phone: data.phone || 'N/A',
     email: data.email || 'N/A',
     cityState: data.cityState || 'Nigeria',
-    packageSubscribed: data.packageSubscribed || 'Basic Package',
-    edition: data.edition || 'basic',
+    packageSubscribed: data.packageSubscribed || (data.edition === 'none' ? 'Hardware & Add-ons Only' : 'Basic Package'),
+    edition: data.edition || (data.packageSubscribed?.includes('Hardware') ? 'none' : 'basic'),
     durationTier: data.durationTier || '1_year',
-    tenureLabel: data.tenureLabel || '1 Year License',
+    tenureLabel: data.tenureLabel || (data.edition === 'none' ? 'Hardware Only (No Plan)' : '1 Year License'),
     amountPaid: Number(data.amountPaid) || 0,
     currency: data.currency || 'NGN',
     licenseCode: assignedLicenseCode,
@@ -250,9 +252,11 @@ export function generateLicenseForExistingCustomer(id: string): { customer: Cust
   const terminalLimit =
     customer.edition === 'enterprise' ? 999 : customer.edition === 'standard' ? 3 : 1;
 
+  const targetEdition: EditionType = customer.edition === 'none' ? 'standard' : customer.edition;
+
   const generated = generateServerMasterKey({
     businessName: customer.businessName,
-    edition: customer.edition,
+    edition: targetEdition,
     validityDays,
     terminalLimit,
   });

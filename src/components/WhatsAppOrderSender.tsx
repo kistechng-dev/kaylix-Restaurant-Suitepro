@@ -15,19 +15,22 @@ import {
   ExternalLink,
   CheckCircle2,
 } from 'lucide-react';
-import { EditionType, DurationTier, OrderFormData, EditionDetail, HardwareAddon } from '../types';
+import { EditionType, OrderEditionType, DurationTier, OrderFormData, EditionDetail, HardwareAddon } from '../types';
 import { VENDOR_CONTACT } from '../data/mockData';
 import { getEffectiveEditions, getEffectiveHardware } from '../utils/pricingStorage';
+import { GlobalLocationPicker, LocationSelection } from './GlobalLocationPicker';
 
 interface WhatsAppOrderSenderProps {
-  initialEdition: EditionType;
+  initialEdition: OrderEditionType;
   initialTier?: DurationTier;
+  initialAddons?: string[];
   currency: 'NGN' | 'USD';
 }
 
 export const WhatsAppOrderSender: React.FC<WhatsAppOrderSenderProps> = ({
   initialEdition,
   initialTier = '1_year',
+  initialAddons,
   currency,
 }) => {
   const [editionsMap, setEditionsMap] = useState<Record<string, EditionDetail>>(getEffectiveEditions);
@@ -41,15 +44,23 @@ export const WhatsAppOrderSender: React.FC<WhatsAppOrderSenderProps> = ({
     window.addEventListener('kaylix_pricing_updated', handlePriceUpdate);
     return () => window.removeEventListener('kaylix_pricing_updated', handlePriceUpdate);
   }, []);
+  const [orderCountryName, setOrderCountryName] = useState('Nigeria');
+  const [orderCountryDialCode, setOrderCountryDialCode] = useState('+234');
+  const [orderCountryFlag, setOrderCountryFlag] = useState('🇳🇬');
+
   const [formData, setFormData] = useState<OrderFormData>({
     customerName: '',
     businessName: '',
     phone: '',
     email: '',
-    cityState: '',
+    cityState: 'Lekki Phase 1, Eti-Osa LGA, Lagos, Nigeria',
     edition: initialEdition,
     durationTier: initialEdition === 'trial' ? '7_days' : initialTier,
-    selectedAddons: [],
+    selectedAddons: initialAddons && initialAddons.length > 0
+      ? initialAddons
+      : initialEdition === 'none'
+      ? ['thermal-printer-80mm']
+      : [],
     deploymentType: 'remote',
     paymentMethod: 'bank_transfer',
     notes: '',
@@ -65,8 +76,13 @@ export const WhatsAppOrderSender: React.FC<WhatsAppOrderSenderProps> = ({
       ...prev,
       edition: initialEdition,
       durationTier: initialEdition === 'trial' ? '7_days' : initialTier || '1_year',
+      selectedAddons: initialAddons && initialAddons.length > 0
+        ? initialAddons
+        : initialEdition === 'none' && prev.selectedAddons.length === 0
+        ? ['thermal-printer-80mm']
+        : prev.selectedAddons,
     }));
-  }, [initialEdition, initialTier]);
+  }, [initialEdition, initialTier, initialAddons]);
 
   const toggleAddon = (addonId: string) => {
     setFormData((prev) => {
@@ -111,14 +127,20 @@ export const WhatsAppOrderSender: React.FC<WhatsAppOrderSenderProps> = ({
     });
   };
 
-  const selectedEditionDetail = editionsMap[formData.edition] || editionsMap.standard;
-  const currentPlan =
-    selectedEditionDetail.plans[formData.durationTier] ||
-    Object.values(selectedEditionDetail.plans)[0];
+  const isHardwareOnly = formData.edition === 'none';
+
+  const selectedEditionDetail = !isHardwareOnly
+    ? editionsMap[formData.edition] || editionsMap.standard
+    : null;
+
+  const currentPlan = selectedEditionDetail
+    ? selectedEditionDetail.plans[formData.durationTier] || Object.values(selectedEditionDetail.plans)[0]
+    : null;
 
   // Calculate pricing
-  const softwareCost =
-    currency === 'NGN' ? currentPlan.priceNGN : currentPlan.priceUSD;
+  const softwareCost = isHardwareOnly || !currentPlan
+    ? 0
+    : currency === 'NGN' ? currentPlan.priceNGN : currentPlan.priceUSD;
 
   const hardwareCost = formData.selectedAddons.reduce((acc, id) => {
     const addon = hardwareList.find((a) => a.id === id);
@@ -145,6 +167,8 @@ export const WhatsAppOrderSender: React.FC<WhatsAppOrderSenderProps> = ({
             })
             .filter(Boolean)
             .join('\n')
+        : isHardwareOnly
+        ? '  • [No hardware selected yet]'
         : '  • None (Software License Only)';
 
     const deploymentText =
@@ -161,13 +185,24 @@ export const WhatsAppOrderSender: React.FC<WhatsAppOrderSenderProps> = ({
         ? 'Online Card / POS Payment'
         : 'Cash on Delivery / Onsite Settlement';
 
-    const tenureText =
-      formData.edition === 'trial'
-        ? '7-Day Free Evaluation'
-        : `${currentPlan.label} (${currentPlan.periodText})`;
+    const tenureText = isHardwareOnly
+      ? 'No Software License Required (Hardware Purchase Only)'
+      : formData.edition === 'trial'
+      ? '7-Day Free Evaluation'
+      : currentPlan ? `${currentPlan.label} (${currentPlan.periodText})` : '1 Year License';
 
-    return `*HELLO KAYLIX SOFTWARE SALES DESK!* 👋
-I would like to place an order for the *Kaylix Kitchen & Eatery Management App*.
+    const packageSection = isHardwareOnly
+      ? `📦 *ORDER TYPE: STANDALONE HARDWARE & ADD-ONS ONLY*
+*Software Plan Package:* None (Hardware Only Purchase)
+*Software Plan Cost:* ${currencySymbol}0`
+      : `📦 *PACKAGE & TENURE SELECTED:*
+*${selectedEditionDetail ? selectedEditionDetail.name.toUpperCase() : 'STANDARD PACKAGE'}* (${selectedEditionDetail?.badge || 'Dining'})
+*License Tenure:* ${tenureText}
+*Stations Authorized:* ${selectedEditionDetail?.terminals || '1 Station'}
+*Software Cost:* ${currencySymbol}${softwareCost.toLocaleString()}`;
+
+    return `*HELLO KAYLIX SOFTWARE & HARDWARE SALES DESK!* 👋
+I would like to place an order from the *Kaylix Official Portal*.
 
 📋 *ORDER SUMMARY:*
 ----------------------------------------
@@ -177,13 +212,9 @@ I would like to place an order for the *Kaylix Kitchen & Eatery Management App*.
 *Email:* ${formData.email || '[Not Provided]'}
 *Location / City:* ${formData.cityState || '[Not Provided]'}
 
-📦 *PACKAGE & TENURE SELECTED:*
-*${selectedEditionDetail.name.toUpperCase()}* (${selectedEditionDetail.badge})
-*License Tenure:* ${tenureText}
-*Stations Authorized:* ${selectedEditionDetail.terminals}
-*Software Cost:* ${currencySymbol}${softwareCost.toLocaleString()}
+${packageSection}
 
-🛠️ *HARDWARE ADD-ONS:*
+🛠️ *HARDWARE EQUIPMENT & ADD-ONS:*
 ${addonsListText}
 *Hardware Total:* ${currencySymbol}${hardwareCost.toLocaleString()}
 
@@ -195,36 +226,54 @@ ${addonsListText}
 *Payment Method:* ${paymentText}
 ${formData.notes ? `*Special Notes:* ${formData.notes}\n` : ''}
 ----------------------------------------
-*Generated via Official Kaylix Download Portal*
-Please send payment confirmation and issue license key details. Thank you!`;
+*Generated via Official Kaylix Ordering Desk*
+Please confirm order availability and shipping / activation instructions. Thank you!`;
   };
 
   const handleSendToWhatsApp = async () => {
+    if (isHardwareOnly && formData.selectedAddons.length === 0) {
+      alert('Please select at least one hardware add-on or equipment item to proceed with your hardware order.');
+      return;
+    }
+
     setIsSubmitting(true);
     let orderRef = '';
     try {
+      const digitsOnly = formData.phone.replace(/\D/g, '');
+      const cleanDialCode = orderCountryDialCode.replace(/\D/g, '');
+      let fullPhone = digitsOnly;
+      if (cleanDialCode && !digitsOnly.startsWith(cleanDialCode)) {
+        const trimmed = digitsOnly.replace(/^0+/, '');
+        fullPhone = `${cleanDialCode}${trimmed}`;
+      }
+
       const response = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customerName: formData.customerName.trim() || 'Valued Eatery Client',
           businessName: formData.businessName.trim() || 'Eatery / Lounge',
-          phone: formData.phone.trim() || 'N/A',
+          phone: fullPhone || formData.phone.trim() || 'N/A',
           email: formData.email.trim() || 'N/A',
-          cityState: formData.cityState.trim() || 'Nigeria',
-          packageSubscribed: selectedEditionDetail.name,
+          cityState: formData.cityState.trim() || `${orderCountryName}`,
+          packageSubscribed: isHardwareOnly
+            ? 'Hardware & Add-ons Only'
+            : (selectedEditionDetail?.name || 'Standard Package'),
           edition: formData.edition,
           durationTier: formData.durationTier,
-          tenureLabel:
-            formData.edition === 'trial'
-              ? '7-Day Free Evaluation'
-              : `${currentPlan.label} (${currentPlan.periodText})`,
+          tenureLabel: isHardwareOnly
+            ? 'Hardware Only (No Software Plan)'
+            : formData.edition === 'trial'
+            ? '7-Day Free Evaluation'
+            : currentPlan ? `${currentPlan.label} (${currentPlan.periodText})` : '1 Year License',
           amountPaid: grandTotal,
           currency,
           selectedAddons: formData.selectedAddons,
           deploymentType: formData.deploymentType,
           paymentMethod: formData.paymentMethod,
-          notes: formData.notes,
+          notes: isHardwareOnly
+            ? `[Hardware-Only Order] ${formData.notes || ''}`
+            : formData.notes,
         }),
       });
       const data = await response.json();
@@ -264,7 +313,7 @@ Please send payment confirmation and issue license key details. Thank you!`;
             Direct Sales & License Desk
           </div>
           <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-            Interactive WhatsApp Order Sender
+            Interactive Order Sender
           </h2>
           <p className="mt-1.5 text-slate-700 font-medium text-xs sm:text-sm leading-relaxed">
             Customize your package, pick your 1-Year, 3-Years, or Lifetime duration, add optional hardware, and transmit directly to our official WhatsApp sales engineering team.
@@ -338,21 +387,33 @@ Please send payment confirmation and issue license key details. Thank you!`;
                 </div>
               </div>
 
-              {/* Phone, Email, Location */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {/* Phone & Email */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5 text-emerald-700" />
-                    WhatsApp Number *
+                  <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5 text-emerald-700" />
+                      <span>WhatsApp Number *</span>
+                    </span>
+                    <span className="text-[10px] text-emerald-700 font-mono font-bold flex items-center gap-1">
+                      <span>{orderCountryFlag}</span>
+                      <span>{orderCountryName} ({orderCountryDialCode})</span>
+                    </span>
                   </label>
-                  <input
-                    type="tel"
-                    required
-                    placeholder="e.g. 0803 123 4567"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-900 font-medium placeholder-slate-400 focus:outline-none focus:border-emerald-600"
-                  />
+                  <div className="flex items-center bg-white border border-slate-300 rounded-xl px-2.5 py-1.5 focus-within:border-emerald-600 focus-within:ring-1 focus-within:ring-emerald-500/20">
+                    <span className="text-xs font-mono font-bold text-slate-600 mr-2 flex items-center gap-1 shrink-0 bg-slate-100 px-2 py-0.5 rounded-md">
+                      <span>{orderCountryFlag}</span>
+                      <span>{orderCountryDialCode}</span>
+                    </span>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="e.g. 803 123 4567 or 7911 123456"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      className="w-full text-xs sm:text-sm text-slate-900 font-medium placeholder-slate-400 focus:outline-none bg-transparent"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -368,28 +429,73 @@ Please send payment confirmation and issue license key details. Thank you!`;
                     className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-900 font-medium placeholder-slate-400 focus:outline-none focus:border-blue-600"
                   />
                 </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-rose-700" />
-                    City & State
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Lagos, Abuja"
-                    value={formData.cityState}
-                    onChange={(e) => setFormData({ ...formData, cityState: e.target.value })}
-                    className="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xs sm:text-sm text-slate-900 font-medium placeholder-slate-400 focus:outline-none focus:border-rose-600"
-                  />
-                </div>
               </div>
 
-              {/* Plan Package Selector */}
+              {/* Worldwide Location Picker: Country, State, Local Govt, City */}
               <div>
-                <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
-                  1. Select Plan Package:
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <GlobalLocationPicker
+                  initialCountry={orderCountryName}
+                  initialState="Lagos"
+                  initialLocalGovt="Eti-Osa"
+                  initialCity="Victoria Island"
+                  onCountryDialCodeChange={(dialCode) => {
+                    setOrderCountryDialCode(dialCode);
+                  }}
+                  onChange={(loc: LocationSelection) => {
+                    setOrderCountryName(loc.country);
+                    setOrderCountryFlag(loc.flag);
+                    setOrderCountryDialCode(loc.dialCode);
+                    setFormData((prev) => ({
+                      ...prev,
+                      cityState: loc.formattedString,
+                    }));
+                  }}
+                />
+              </div>
+
+              {/* Plan Package Selector or Hardware-Only Selection */}
+              <div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2 pb-1 border-b border-slate-200">
+                  <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    1. Select Order Type & Package:
+                  </label>
+                  <div className="flex items-center gap-1 bg-slate-200/80 p-0.5 rounded-lg self-start sm:self-auto text-[11px] font-bold">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (isHardwareOnly) {
+                          setFormData({ ...formData, edition: 'standard', durationTier: '1_year' });
+                        }
+                      }}
+                      className={`px-2.5 py-1 rounded-md transition-all ${
+                        !isHardwareOnly
+                          ? 'bg-white text-slate-900 shadow-2xs font-black'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      💻 Software (+ Hardware)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          edition: 'none',
+                          selectedAddons: formData.selectedAddons.length > 0 ? formData.selectedAddons : [hardwareList[0]?.id || 'thermal-printer-80mm'],
+                        });
+                      }}
+                      className={`px-2.5 py-1 rounded-md transition-all ${
+                        isHardwareOnly
+                          ? 'bg-amber-600 text-white shadow-2xs font-black'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      🖨️ Hardware Only (No Plan)
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                   {(['trial', 'basic', 'standard', 'enterprise'] as EditionType[]).map((edId) => {
                     const item = editionsMap[edId];
                     const isSelected = formData.edition === edId;
@@ -398,15 +504,24 @@ Please send payment confirmation and issue license key details. Thank you!`;
                       <div
                         key={edId}
                         onClick={() => {
-                          const newTier =
-                            edId === 'trial'
-                              ? '7_days'
-                              : edId === 'enterprise'
-                              ? 'lifetime'
-                              : formData.durationTier === '7_days'
-                              ? '1_year'
-                              : formData.durationTier;
-                          setFormData({ ...formData, edition: edId, durationTier: newTier });
+                          if (isSelected) {
+                            // Deselect plan to allow hardware add-on only without plan package
+                            setFormData({
+                              ...formData,
+                              edition: 'none',
+                              selectedAddons: formData.selectedAddons.length > 0 ? formData.selectedAddons : [hardwareList[0]?.id || 'thermal-printer-80mm'],
+                            });
+                          } else {
+                            const newTier =
+                              edId === 'trial'
+                                ? '7_days'
+                                : edId === 'enterprise'
+                                ? 'lifetime'
+                                : formData.durationTier === '7_days'
+                                ? '1_year'
+                                : formData.durationTier;
+                            setFormData({ ...formData, edition: edId, durationTier: newTier });
+                          }
                         }}
                         className={`cursor-pointer rounded-xl p-2.5 border transition-all ${
                           isSelected
@@ -422,11 +537,65 @@ Please send payment confirmation and issue license key details. Thank you!`;
                       </div>
                     );
                   })}
+
+                  {/* 5th Option: Hardware / Add-on Only Card */}
+                  <div
+                    onClick={() => {
+                      setFormData({
+                        ...formData,
+                        edition: 'none',
+                        selectedAddons: formData.selectedAddons.length > 0 ? formData.selectedAddons : [hardwareList[0]?.id || 'thermal-printer-80mm'],
+                      });
+                    }}
+                    className={`cursor-pointer rounded-xl p-2.5 border transition-all col-span-2 sm:col-span-1 ${
+                      isHardwareOnly
+                        ? 'bg-gradient-to-br from-amber-100 to-orange-100 border-amber-600 ring-2 ring-amber-500/40 text-slate-900 shadow-2xs'
+                        : 'bg-slate-50 border-dashed border-amber-300 hover:border-amber-400 text-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-amber-950 truncate flex items-center gap-1">
+                        <span>🛠️ Hardware Only</span>
+                      </span>
+                      {isHardwareOnly && <Check className="w-3.5 h-3.5 text-amber-800 stroke-[3]" />}
+                    </div>
+                    <span className="text-[10px] text-amber-800 font-bold block mt-0.5 truncate">
+                      No Plan Required
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-1.5 flex flex-wrap items-center justify-between text-[11px] text-slate-500 gap-1">
+                  <span>💡 Tip: Click any selected plan again to deselect, or pick <strong>🛠️ Hardware Only</strong> to order equipment without a plan package.</span>
+                  {isHardwareOnly && (
+                    <span className="text-emerald-700 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      Hardware Add-ons Only Active
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {/* Duration Tenure Selector */}
-              {formData.edition !== 'trial' ? (
+              {/* Duration Tenure Selector or Hardware Only Notice */}
+              {isHardwareOnly ? (
+                <div className="p-3.5 rounded-2xl bg-amber-50/90 border border-amber-300 text-xs text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+                  <div>
+                    <span className="font-black text-slate-900 flex items-center gap-1.5">
+                      <span>✓ Standalone Hardware & Add-on Order</span>
+                      <span className="text-[10px] bg-amber-200 text-amber-900 px-2 py-0.2 rounded-full font-bold">₦0 / $0 Software Fee</span>
+                    </span>
+                    <p className="text-slate-600 text-[11px] mt-0.5 leading-snug">
+                      No recurring software package required. Pick any combination of thermal printers, cash drawers, barcode scanners, and wireless handheld devices below.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, edition: 'standard', durationTier: '1_year' })}
+                    className="px-2.5 py-1 rounded-lg bg-white border border-amber-400 text-amber-900 font-bold text-[11px] hover:bg-amber-100 transition-colors shrink-0 shadow-2xs"
+                  >
+                    + Add Software Plan
+                  </button>
+                </div>
+              ) : formData.edition !== 'trial' ? (
                 <div>
                   <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                     <Calendar className="w-3.5 h-3.5 text-amber-700" />
@@ -434,7 +603,7 @@ Please send payment confirmation and issue license key details. Thank you!`;
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     {(['1_year', '3_years', 'lifetime'] as DurationTier[]).map((tierKey) => {
-                      const plan = selectedEditionDetail.plans[tierKey];
+                      const plan = selectedEditionDetail?.plans[tierKey];
                       if (!plan) return null;
                       const isSelected = formData.durationTier === tierKey;
                       const priceLabel =
@@ -475,9 +644,16 @@ Please send payment confirmation and issue license key details. Thank you!`;
 
               {/* Hardware Add-ons Checkboxes */}
               <div>
-                <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider mb-1.5">
-                  3. Optional POS Hardware Add-ons:
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-slate-800 uppercase tracking-wider">
+                    {isHardwareOnly ? '2. Select Your POS Hardware & Equipment Add-ons *' : '3. Optional POS Hardware Add-ons:'}
+                  </label>
+                  {isHardwareOnly && (
+                    <span className="text-[10px] bg-amber-100 text-amber-900 font-extrabold px-2 py-0.5 rounded-full border border-amber-300">
+                      Select 1 or more items
+                    </span>
+                  )}
+                </div>
                 <div className="space-y-2">
                   {hardwareList.map((addon) => {
                     const isChecked = formData.selectedAddons.includes(addon.id);
@@ -648,10 +824,12 @@ Please send payment confirmation and issue license key details. Thank you!`;
               <div className="space-y-1.5 text-xs">
                 <div className="flex justify-between text-slate-700 font-medium">
                   <span>
-                    Plan Package ({selectedEditionDetail.name}):
+                    Plan Package {selectedEditionDetail ? `(${selectedEditionDetail.name})` : ''}:
                   </span>
                   <span className="font-mono font-bold text-slate-900">
-                    {formData.edition === 'trial'
+                    {isHardwareOnly
+                      ? 'None (Hardware Only)'
+                      : formData.edition === 'trial'
                       ? 'FREE (7-Day)'
                       : currency === 'NGN'
                       ? `₦${softwareCost.toLocaleString()}`

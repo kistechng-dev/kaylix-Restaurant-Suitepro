@@ -11,11 +11,12 @@ import { FeatureMatrix } from './components/FeatureMatrix';
 import { BankDetailsSection } from './components/BankDetailsSection';
 import { WhatsAppOrderSender } from './components/WhatsAppOrderSender';
 import { DownloadModal } from './components/DownloadModal';
+import { DownloadPage } from './components/DownloadPage';
 import { Footer } from './components/Footer';
 import { AdminPortal } from './components/AdminPortal';
 import { MobileBottomBar } from './components/MobileBottomBar';
 import { PhoneSimulatorWrapper } from './components/PhoneSimulatorWrapper';
-import { EditionDetail, EditionType, DurationTier } from './types';
+import { EditionDetail, EditionType, OrderEditionType, DurationTier } from './types';
 import { EDITIONS } from './data/mockData';
 import { Package, Building2, MessageSquare, ArrowRight, ShieldCheck, ChevronRight } from 'lucide-react';
 import { syncPricingWithServer } from './utils/pricingStorage';
@@ -23,15 +24,17 @@ import { syncPricingWithServer } from './utils/pricingStorage';
 export default function App() {
   const [currency, setCurrency] = useState<'NGN' | 'USD'>('NGN');
   const [downloadModalEdition, setDownloadModalEdition] = useState<EditionDetail | null>(null);
-  const [orderSelectedEdition, setOrderSelectedEdition] = useState<EditionType>('standard');
+  const [orderSelectedEdition, setOrderSelectedEdition] = useState<OrderEditionType>('standard');
   const [orderSelectedTier, setOrderSelectedTier] = useState<DurationTier>('1_year');
+  const [orderSelectedAddons, setOrderSelectedAddons] = useState<string[]>([]);
   const [isPhoneMode, setIsPhoneMode] = useState<boolean>(false);
 
-  // Multi-page navigation state: 'tour' | 'plan' | 'banks' | 'order'
+  // Multi-page navigation state: 'tour' | 'plan' | 'download' | 'banks' | 'order'
   const [currentPage, setCurrentPage] = useState<PageType>(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.toLowerCase();
       if (hash.includes('plan') || hash.includes('package') || hash.includes('editions')) return 'plan';
+      if (hash.includes('download')) return 'download';
       if (hash.includes('bank')) return 'banks';
       if (hash.includes('order')) return 'order';
     }
@@ -59,6 +62,8 @@ export default function App() {
 
       if (hash.includes('plan') || hash.includes('package') || hash.includes('editions')) {
         setCurrentPage('plan');
+      } else if (hash.includes('download')) {
+        setCurrentPage('download');
       } else if (hash.includes('bank')) {
         setCurrentPage('banks');
       } else if (hash.includes('order')) {
@@ -79,16 +84,32 @@ export default function App() {
   };
 
   const handleDownloadEdition = (edition: EditionDetail, tier: DurationTier) => {
-    setDownloadModalEdition(edition);
+    handleSelectForOrder(edition.id, tier);
   };
 
   const handleQuickDownloadTrial = () => {
-    navigateToPage('plan');
+    handleSelectForOrder('trial', '7_days');
   };
 
-  const handleSelectForOrder = (editionId: EditionType, tier: DurationTier) => {
+  const handleSelectForOrder = (editionId: OrderEditionType, tier: DurationTier = '1_year') => {
     setOrderSelectedEdition(editionId);
     setOrderSelectedTier(tier);
+    if (editionId === 'none') {
+      setOrderSelectedAddons(['thermal-printer-80mm']);
+    } else {
+      setOrderSelectedAddons([]);
+    }
+    navigateToPage('order');
+  };
+
+  const handleOrderHardwareOnly = (addonId?: string) => {
+    setOrderSelectedEdition('none');
+    setOrderSelectedTier('1_year');
+    if (addonId) {
+      setOrderSelectedAddons([addonId]);
+    } else {
+      setOrderSelectedAddons(['thermal-printer-80mm']);
+    }
     navigateToPage('order');
   };
 
@@ -158,6 +179,8 @@ export default function App() {
               currency={currency}
               onDownloadEdition={handleDownloadEdition}
               onSelectForOrder={handleSelectForOrder}
+              onOrderHardwareOnly={handleOrderHardwareOnly}
+              onNavigateToDownload={() => navigateToPage('download')}
             />
 
             {/* Feature Comparison Matrix */}
@@ -197,6 +220,20 @@ export default function App() {
                 </div>
               </div>
             </div>
+          </div>
+        );
+
+      case 'download':
+        return (
+          <div className="animate-fadeIn">
+            <DownloadPage
+              onNavigateToOrder={(editionId) => {
+                if (editionId) setOrderSelectedEdition(editionId);
+                navigateToPage('order');
+              }}
+              onNavigateToBanks={() => navigateToPage('banks')}
+              onOrderHardwareOnly={handleOrderHardwareOnly}
+            />
           </div>
         );
 
@@ -327,6 +364,7 @@ export default function App() {
             <WhatsAppOrderSender
               initialEdition={orderSelectedEdition}
               initialTier={orderSelectedTier}
+              initialAddons={orderSelectedAddons}
               currency={currency}
             />
           </div>
@@ -340,6 +378,7 @@ export default function App() {
             <Hero
               onDownloadTrial={handleQuickDownloadTrial}
               onNavigateToPage={navigateToPage}
+              onOrderHardwareOnly={handleOrderHardwareOnly}
               currency={currency}
             />
 
@@ -462,6 +501,9 @@ export default function App() {
       <DownloadModal
         edition={downloadModalEdition}
         onClose={() => setDownloadModalEdition(null)}
+        onProceedToOrder={(editionId) => {
+          handleSelectForOrder(editionId || 'standard');
+        }}
       />
     </div>
   );

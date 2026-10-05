@@ -12,28 +12,42 @@ import {
   Layers,
   ArrowRight,
   TrendingUp,
+  ExternalLink,
+  Printer,
+  ShoppingBag,
+  Truck,
+  CheckCircle2,
+  Cpu,
+  Tablet,
+  ScanLine,
 } from 'lucide-react';
-import { EditionDetail, EditionType, DurationTier } from '../types';
-import { getEffectiveEditions, getCustomPricing } from '../utils/pricingStorage';
+import { EditionDetail, EditionType, OrderEditionType, DurationTier, HardwareAddon } from '../types';
+import { getEffectiveEditions, getCustomPricing, getEffectiveHardware } from '../utils/pricingStorage';
 
 interface EditionsSectionProps {
   currency: 'NGN' | 'USD';
   onDownloadEdition: (edition: EditionDetail, tier: DurationTier) => void;
-  onSelectForOrder: (editionId: EditionType, tier: DurationTier) => void;
+  onSelectForOrder: (editionId: OrderEditionType, tier: DurationTier) => void;
+  onOrderHardwareOnly?: (addonId?: string) => void;
+  onNavigateToDownload?: () => void;
 }
 
 export const EditionsSection: React.FC<EditionsSectionProps> = ({
   currency,
   onDownloadEdition,
   onSelectForOrder,
+  onOrderHardwareOnly,
+  onNavigateToDownload,
 }) => {
   const [editionsMap, setEditionsMap] = useState<Record<string, EditionDetail>>(getEffectiveEditions);
   const [pricingConfig, setPricingConfig] = useState(getCustomPricing);
+  const [hardwareList, setHardwareList] = useState<HardwareAddon[]>(getEffectiveHardware);
 
   useEffect(() => {
     const handlePriceUpdate = () => {
       setEditionsMap(getEffectiveEditions());
       setPricingConfig(getCustomPricing());
+      setHardwareList(getEffectiveHardware());
     };
     window.addEventListener('kaylix_pricing_updated', handlePriceUpdate);
     return () => window.removeEventListener('kaylix_pricing_updated', handlePriceUpdate);
@@ -225,25 +239,15 @@ export const EditionsSection: React.FC<EditionsSectionProps> = ({
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
 
-          {/* Download Button */}
+          {/* Download & Proceed to Interactive Order Sender */}
           <button
-            onClick={() => onDownloadEdition(edition, currentTier)}
-            className={`w-full py-2 px-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all active:scale-95 ${
-              isTrial
-                ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-2xs'
-                : isStandard
-                ? 'bg-amber-100 hover:bg-amber-200 text-amber-950 border border-amber-300'
-                : 'bg-slate-100 hover:bg-slate-200 text-slate-900 border border-slate-300'
-            }`}
+            onClick={() => onSelectForOrder(edition.id, currentTier)}
+            className="w-full py-1 text-center text-[11px] font-bold text-slate-600 hover:text-emerald-800 flex items-center justify-center gap-1.5 transition-colors hover:underline"
           >
-            <Download className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>Download .ZIP ({isTrial ? '7-Day Pass' : activePlan.label})</span>
+            <Download className="w-3.5 h-3.5 text-amber-700" />
+            <span>Download & Proceed to Order Sender</span>
+            <ArrowRight className="w-3 h-3 text-amber-600" />
           </button>
-
-          {/* File Metadata */}
-          <div className="text-center pt-0.5 text-[10px] text-slate-500 font-mono font-medium">
-            {edition.fileSize} • ESC/POS Autocut Ready
-          </div>
         </div>
       </div>
     );
@@ -326,6 +330,115 @@ export const EditionsSection: React.FC<EditionsSectionProps> = ({
         {/* DESKTOP VIEW: 4 Cards Grid (>= md:) */}
         <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
           {editionsList.map((edition) => renderEditionCard(edition, false))}
+        </div>
+
+        {/* SECTION 2: STANDALONE HARDWARE & ADD-ONS (NO SOFTWARE PLAN REQUIRED) */}
+        <div className="mt-12 pt-10 border-t border-slate-200">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 mb-2">
+                <ShoppingBag className="w-3.5 h-3.5 text-amber-700" />
+                <span>Zero Software Subscription Required</span>
+              </div>
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">
+                POS Hardware & Equipment Add-ons
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-600 font-medium max-w-2xl mt-1 leading-relaxed">
+                Need to buy thermal receipt printers, cash drawers, barcode scanners, or touchscreen terminals without buying a software plan package? Visitors can apply for and purchase any hardware add-on below directly with immediate dispatch.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => onOrderHardwareOnly ? onOrderHardwareOnly() : onSelectForOrder('none', '1_year')}
+              className="px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shrink-0 shadow-sm transition-all active:scale-95"
+            >
+              <Printer className="w-4 h-4 text-amber-400" />
+              <span>Order Hardware Add-ons Only (₦0 Plan)</span>
+              <ArrowRight className="w-4 h-4 text-slate-300" />
+            </button>
+          </div>
+
+          {/* Hardware Cards Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
+            {hardwareList.map((addon) => {
+              const priceStr =
+                currency === 'NGN'
+                  ? `₦${addon.priceNGN.toLocaleString()}`
+                  : `$${addon.priceUSD.toLocaleString()}`;
+              const isOutOfStock = addon.availability === 'out_of_stock';
+
+              return (
+                <div
+                  key={addon.id}
+                  className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-300/80 hover:border-amber-400 hover:shadow-md transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-[10px] font-black uppercase tracking-wider bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-md border border-slate-200">
+                        {addon.category.toUpperCase()} ADD-ON
+                      </span>
+                      {addon.badge && (
+                        <span className="text-[10px] font-black text-amber-900 bg-amber-100 px-2 py-0.5 rounded-md border border-amber-300">
+                          {addon.badge}
+                        </span>
+                      )}
+                    </div>
+
+                    <h4 className="text-sm font-black text-slate-900 leading-snug">
+                      {addon.name}
+                    </h4>
+
+                    <p className="text-xs text-slate-600 font-medium mt-1.5 leading-relaxed">
+                      {addon.description}
+                    </p>
+
+                    {addon.specs && (
+                      <div className="mt-2.5 p-2 rounded-lg bg-slate-50 border border-slate-200 text-[11px] font-mono text-slate-600">
+                        <strong className="text-slate-800">Specs:</strong> {addon.specs}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-100">
+                    <div className="flex items-baseline justify-between mb-3">
+                      <span className="text-lg sm:text-xl font-black text-slate-900 font-mono">
+                        {priceStr}
+                      </span>
+                      <span className="text-[11px] font-bold text-emerald-800 flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>No Plan Required</span>
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={isOutOfStock}
+                      onClick={() => onOrderHardwareOnly ? onOrderHardwareOnly(addon.id) : onSelectForOrder('none', '1_year')}
+                      className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-95 disabled:opacity-50"
+                    >
+                      <ShoppingBag className="w-3.5 h-3.5" />
+                      <span>Order This Add-on (No Plan Required)</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Quick Hardware Delivery Note */}
+          <div className="mt-5 p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200 flex flex-wrap items-center justify-between gap-3 text-xs text-emerald-950">
+            <div className="flex items-center gap-2">
+              <Truck className="w-4 h-4 text-emerald-700 shrink-0" />
+              <span>
+                <strong>Hardware Dispatch:</strong> Direct nationwide courier dispatch across all 36 Nigerian states & international shipping available.
+              </span>
+            </div>
+            <span className="font-bold text-emerald-800">
+              1-Year Physical Replacement Warranty + Remote Driver Setup
+            </span>
+          </div>
         </div>
 
         {/* Operating System Compatibility Bar */}

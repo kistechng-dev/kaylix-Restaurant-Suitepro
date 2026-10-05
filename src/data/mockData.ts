@@ -37,6 +37,7 @@ export const EDITIONS: Record<string, EditionDetail> = {
     fileSize: '48.6 MB',
     checksum: 'a87f1c904e22bd8412ee105e493f019b8842c589',
     version: 'v3.4.2 (7-Day Trial Build)',
+    googleDriveUrl: 'https://drive.google.com/drive/folders/1sLwLpP_Kaylix_Trial_POS_v342?usp=sharing',
   },
   basic: {
     id: 'basic',
@@ -93,6 +94,7 @@ export const EDITIONS: Record<string, EditionDetail> = {
     fileSize: '52.1 MB',
     checksum: '6e29bc48d7124ae87901fb4a63198cd87a55021e',
     version: 'v3.4.2 (Latest Stable)',
+    googleDriveUrl: 'https://drive.google.com/drive/folders/1kAx_Kaylix_Basic_POS_1Counter_2Handheld?usp=sharing',
   },
   standard: {
     id: 'standard',
@@ -147,6 +149,7 @@ export const EDITIONS: Record<string, EditionDetail> = {
     fileSize: '68.4 MB',
     checksum: 'f419c8209eb47182da910cb005e8392a149de821',
     version: 'v3.4.2 (Latest Stable)',
+    googleDriveUrl: 'https://drive.google.com/drive/folders/1mYz_Kaylix_Standard_POS_MultiUser_KDS?usp=sharing',
   },
   enterprise: {
     id: 'enterprise',
@@ -199,6 +202,7 @@ export const EDITIONS: Record<string, EditionDetail> = {
     fileSize: '89.2 MB',
     checksum: '09bd47c94a286e11893f441029da6c1e9561b34a',
     version: 'v3.4.2 (Latest Stable)',
+    googleDriveUrl: 'https://drive.google.com/drive/folders/1eNp_Kaylix_Enterprise_POS_CloudHQ?usp=sharing',
   },
 };
 

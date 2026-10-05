@@ -7,6 +7,8 @@ import {
   FileArchive,
   ShieldCheck,
   PhoneCall,
+  ExternalLink,
+  MessageSquare,
 } from 'lucide-react';
 import { EditionDetail } from '../types';
 import { generateInstallerPackage, triggerDownload } from '../utils/installerDownload';
@@ -15,9 +17,10 @@ import { VENDOR_CONTACT } from '../data/mockData';
 interface DownloadModalProps {
   edition: EditionDetail | null;
   onClose: () => void;
+  onProceedToOrder?: (editionId: any) => void;
 }
 
-export const DownloadModal: React.FC<DownloadModalProps> = ({ edition, onClose }) => {
+export const DownloadModal: React.FC<DownloadModalProps> = ({ edition, onClose, onProceedToOrder }) => {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isReady, setIsReady] = useState(false);
 
@@ -55,6 +58,12 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({ edition, onClose }
     const blob = await generateInstallerPackage(edition);
     const zipFilename = `${edition.installerFileName.replace('.exe', '')}_InstallerBundle.zip`;
     triggerDownload(blob, zipFilename);
+    if (onProceedToOrder) {
+      setTimeout(() => {
+        onProceedToOrder(edition.id);
+        onClose();
+      }, 1000);
+    }
   };
 
   return (
@@ -95,6 +104,33 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({ edition, onClose }
                 style={{ width: `${downloadProgress}%` }}
               />
             </div>
+          </div>
+
+          {/* Official Google Drive Mirror Box */}
+          <div className="p-3.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl flex items-center justify-between gap-3 shadow-2xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-white border border-blue-200 flex items-center justify-center shadow-2xs shrink-0">
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                  <path d="M7.71 3.5L1.15 15l3.43 6 6.55-11.5-3.42-6z" fill="#0066DA"/>
+                  <path d="M16.29 3.5h-8.58l6.55 11.5h8.59l-6.56-11.5z" fill="#00AC47"/>
+                  <path d="M22.85 15H9.71l-3.43 6h13.14l3.43-6z" fill="#EA4335"/>
+                </svg>
+              </div>
+              <div>
+                <span className="text-xs font-black text-blue-950 block">Official Google Drive Mirror</span>
+                <span className="text-[10px] text-blue-700 font-medium">Direct cloud download for {edition.name}</span>
+              </div>
+            </div>
+
+            <a
+              href={edition.googleDriveUrl || `https://drive.google.com/drive/folders/1sLwLpP_Kaylix_Trial_POS_v342?usp=sharing`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs flex items-center gap-1.5 shadow-sm shadow-blue-500/20 transition-all shrink-0 active:scale-95"
+            >
+              <span>Download on Drive</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
           </div>
 
           {/* Package Details Box */}
@@ -189,18 +225,31 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({ edition, onClose }
               className="flex-1 py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-orange-500/20 transition-all"
             >
               <Download className="w-4 h-4" />
-              <span>Click to Re-download File</span>
+              <span>Download & Proceed to Order Sender</span>
             </button>
+            {onProceedToOrder && (
+              <button
+                type="button"
+                onClick={() => {
+                  onProceedToOrder(edition.id);
+                  onClose();
+                }}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span>Go to Interactive Order Sender</span>
+              </button>
+            )}
             <a
               href={`https://wa.me/${VENDOR_CONTACT.whatsappNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(
                 `Hello Kaylix Support, I just downloaded the ${edition.name}. Please assist with setup.`
               )}`}
               target="_blank"
               rel="noreferrer"
-              className="flex-1 py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-2 border border-slate-300 transition-colors"
+              className="py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center justify-center gap-2 border border-slate-300 transition-colors"
             >
               <PhoneCall className="w-4 h-4 text-emerald-600" />
-              <span>Get Setup Help on WhatsApp</span>
+              <span>WhatsApp Help</span>
             </a>
           </div>
         </div>

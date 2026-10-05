@@ -24,6 +24,7 @@ interface HeroProps {
   onDownloadTrial: () => void;
   onNavigateToPage?: (page: PageType) => void;
   onScrollToSection?: (sectionId: string) => void;
+  onOrderHardwareOnly?: (addonId?: string) => void;
   currency: 'NGN' | 'USD';
 }
 
@@ -31,11 +32,13 @@ export const Hero: React.FC<HeroProps> = ({
   onDownloadTrial,
   onNavigateToPage,
   onScrollToSection,
+  onOrderHardwareOnly,
   currency,
 }) => {
   const handleNav = (target: PageType | string) => {
     if (onNavigateToPage) {
       if (target === 'whatsapp-order' || target === 'order') onNavigateToPage('order');
+      else if (target === 'download' || target === 'downloads') onNavigateToPage('download');
       else if (target === 'bank-details' || target === 'banks') onNavigateToPage('banks');
       else if (target === 'editions' || target === 'plan') onNavigateToPage('plan');
       else onNavigateToPage('tour');
@@ -139,7 +142,7 @@ export const Hero: React.FC<HeroProps> = ({
               className="w-full sm:w-auto px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 transition-all active:scale-95"
             >
               <Download className="w-4 h-4 stroke-[2.8]" />
-              <span>Download 7-Day Free Trial</span>
+              <span>Download Free Trial & Proceed to Order Sender</span>
               <span className="text-[11px] bg-white/20 px-1.5 py-0.2 rounded font-mono font-medium">
                 .zip
               </span>
@@ -154,19 +157,19 @@ export const Hero: React.FC<HeroProps> = ({
             </button>
 
             <button
-              onClick={() => handleNav('order')}
-              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-white hover:bg-slate-50 text-emerald-800 border border-emerald-400 font-bold text-sm flex items-center justify-center gap-2 shadow-2xs transition-all active:scale-95"
+              onClick={() => (onOrderHardwareOnly ? onOrderHardwareOnly() : handleNav('order'))}
+              className="w-full sm:w-auto px-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-2xs transition-all active:scale-95"
             >
-              <MessageSquare className="w-4 h-4 text-emerald-600" />
-              <span>My Order</span>
+              <Printer className="w-4 h-4 text-amber-400" />
+              <span>Buy Hardware Add-ons</span>
             </button>
 
             <button
-              onClick={() => handleNav('banks')}
-              className="w-full sm:w-auto px-4 py-3 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-bold text-sm flex items-center justify-center gap-2 shadow-2xs transition-all active:scale-95"
+              onClick={() => handleNav('order')}
+              className="w-full sm:w-auto px-4 py-3 rounded-xl bg-white hover:bg-slate-50 text-emerald-800 border border-emerald-400 font-bold text-sm flex items-center justify-center gap-2 shadow-2xs transition-all active:scale-95"
             >
-              <CreditCard className="w-4 h-4 text-amber-600" />
-              <span>Bank Details</span>
+              <MessageSquare className="w-4 h-4 text-emerald-600" />
+              <span>My Order</span>
             </button>
           </div>
 
@@ -181,7 +184,15 @@ export const Hero: React.FC<HeroProps> = ({
                 className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 text-xs font-bold transition-all active:scale-95"
               >
                 <Download className="w-3.5 h-3.5 text-amber-700" />
-                <span>⚡ 7-Day Free Trial</span>
+                <span>⚡ Download Trial & Proceed to Order Sender</span>
+              </button>
+
+              <button
+                onClick={() => (onOrderHardwareOnly ? onOrderHardwareOnly() : handleNav('order'))}
+                className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold transition-all active:scale-95"
+              >
+                <Printer className="w-3.5 h-3.5 text-amber-400" />
+                <span>🖨️ Buy Hardware (No Plan Required)</span>
               </button>
 
               <button

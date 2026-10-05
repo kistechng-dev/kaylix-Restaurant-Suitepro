@@ -1,4 +1,5 @@
 export type EditionType = 'trial' | 'basic' | 'standard' | 'enterprise';
+export type OrderEditionType = EditionType | 'none';
 
 export type DurationTier = '1_year' | '3_years' | 'lifetime' | '7_days';
 
@@ -28,6 +29,7 @@ export interface EditionDetail {
   checksum: string;
   version: string;
   isPopular?: boolean;
+  googleDriveUrl?: string;
 }
 
 export interface BankAccount {
@@ -66,7 +68,7 @@ export interface OrderFormData {
   phone: string;
   email: string;
   cityState: string;
-  edition: EditionType;
+  edition: OrderEditionType;
   durationTier: DurationTier;
   selectedAddons: string[];
   deploymentType: 'remote' | 'self' | 'onsite';
@@ -76,6 +78,7 @@ export interface OrderFormData {
 
 export interface LicenseParams {
   businessName: string;
+  clientPhone?: string;
   edition: EditionType;
   hwid: string;
   validityDays: number; // 0 for lifetime
@@ -129,7 +132,7 @@ export interface CustomerRecord {
   email: string;
   cityState: string;
   packageSubscribed: string;
-  edition: EditionType;
+  edition: OrderEditionType;
   durationTier: DurationTier;
   tenureLabel: string;
   amountPaid: number;

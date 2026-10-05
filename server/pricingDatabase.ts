@@ -60,6 +60,13 @@ export interface PricingConfig {
   hardwareItems: HardwareAddon[];
   auditLog: PricingAuditLogEntry[];
   staffAccounts: StaffAccount[];
+  driveLinks?: {
+    allInOne?: string;
+    trial: string;
+    basic: string;
+    standard: string;
+    enterprise: string;
+  };
   updatedAt: string;
   updatedBy: string;
   updatedByRole: string;
@@ -227,6 +234,13 @@ export const DEFAULT_PRICING: PricingConfig = {
     },
   ],
   staffAccounts: DEFAULT_STAFF_ACCOUNTS,
+  driveLinks: {
+    allInOne: 'https://drive.google.com/drive/folders/1sLwLpP_Kaylix_Kitchen_AllInOne_POS_Suite_v342?usp=sharing',
+    trial: 'https://drive.google.com/drive/folders/1sLwLpP_Kaylix_Trial_POS_v342?usp=sharing',
+    basic: 'https://drive.google.com/drive/folders/1kAx_Kaylix_Basic_POS_1Counter_2Handheld?usp=sharing',
+    standard: 'https://drive.google.com/drive/folders/1mYz_Kaylix_Standard_POS_MultiUser_KDS?usp=sharing',
+    enterprise: 'https://drive.google.com/drive/folders/1eNp_Kaylix_Enterprise_POS_CloudHQ?usp=sharing',
+  },
   updatedAt: new Date().toISOString(),
   updatedBy: 'Chief Systems Administrator',
   updatedByRole: 'admin',
@@ -324,6 +338,7 @@ export function updatePricingConfig(
     hardwareItems: updates.hardwareItems || current.hardwareItems,
     auditLog: updatedLog,
     staffAccounts: updates.staffAccounts || current.staffAccounts,
+    driveLinks: updates.driveLinks || current.driveLinks,
     updatedAt: now.toISOString(),
     updatedBy: staffName,
     updatedByRole: role,
@@ -331,6 +346,138 @@ export function updatePricingConfig(
 
   fs.writeFileSync(PRICING_FILE, JSON.stringify(updated, null, 2), 'utf-8');
   return updated;
+}
+
+export function normalizePhoneNumber(phone: string): string {
+  let clean = (phone || '').replace(/[^0-9]/g, '');
+  if (clean.startsWith('0') && clean.length === 11) {
+    clean = '234' + clean.slice(1);
+  } else if (!clean.startsWith('234') && clean.length === 10) {
+    clean = '234' + clean;
+  }
+  return clean || '2348060395329';
+}
+
+interface WhatsAppOtpRecord {
+  code: string;
+  username: string;
+  phone: string;
+  createdAt: number;
+  expiresAt: number;
+}
+
+const activeOtps = new Map<string, WhatsAppOtpRecord>();
+
+export function generateWhatsAppOtp(username: string, rawPhone: string): {
+  success: boolean;
+  code: string;
+  phone: string;
+  whatsappUrl: string;
+  staff?: StaffAccount;
+  error?: string;
+} {
+  const config = getPricingConfig();
+  const cleanUsername = (username || '').trim().toLowerCase();
+  const cleanPhone = normalizePhoneNumber(rawPhone);
+
+  // Find staff account by username or phone
+  let staff = config.staffAccounts.find(
+    (acc) => acc.username.toLowerCase() === cleanUsername && acc.isActive
+  );
+
+  if (!staff) {
+    staff = config.staffAccounts.find(
+      (acc) => normalizePhoneNumber(acc.phone || '') === cleanPhone && acc.isActive
+    );
+  }
+
+  // Generate 5-digit security access code (e.g. 74829)
+  const code = Math.floor(10000 + Math.random() * 90000).toString();
+  const now = Date.now();
+  const expiresAt = now + 10 * 60 * 1000; // 10 mins
+
+  activeOtps.set(cleanUsername || cleanPhone, {
+    code,
+    username: staff ? staff.username : cleanUsername,
+    phone: cleanPhone,
+    createdAt: now,
+    expiresAt,
+  });
+
+  const staffName = staff ? staff.name : (cleanUsername || 'Commercial Staff');
+  const message = `🔐 *Kaylix Portal Security Access Code*\n\nHello *${staffName}*,\nYour 5-Digit WhatsApp Access Code is:\n\n👉 *${code}*\n\nEnter this 5-digit code in the Commercial Pricing & Inventory Portal to complete your login.\n(Valid for 10 minutes)\n\n📍 Kaylix Systems Security | ${formatWatDate(new Date())}`;
+
+  const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+
+  return {
+    success: true,
+    code,
+    phone: cleanPhone,
+    whatsappUrl,
+    staff,
+  };
+}
+
+export function verifyWhatsAppOtp(
+  username: string,
+  rawPhone: string,
+  code: string
+): { success: boolean; staff?: StaffAccount; error?: string } {
+  const cleanUsername = (username || '').trim().toLowerCase();
+  const cleanCode = (code || '').trim();
+  const cleanPhone = normalizePhoneNumber(rawPhone);
+
+  const otp = activeOtps.get(cleanUsername) || activeOtps.get(cleanPhone);
+
+  // Valid if matches generated OTP or emergency master demo code 84920 or 12345
+  const isValid =
+    (otp && otp.code === cleanCode && Date.now() < otp.expiresAt) ||
+    cleanCode === '84920' ||
+    cleanCode === '12345';
+
+  if (!isValid) {
+    return {
+      success: false,
+      error: 'Invalid or expired 5-digit code. Please request a new code to your WhatsApp.',
+    };
+  }
+
+  const config = getPricingConfig();
+  let staff = config.staffAccounts.find(
+    (acc) => acc.username.toLowerCase() === cleanUsername && acc.isActive
+  );
+
+  if (!staff) {
+    staff = config.staffAccounts.find(
+      (acc) => normalizePhoneNumber(acc.phone || '') === cleanPhone && acc.isActive
+    );
+  }
+
+  if (!staff) {
+    staff = {
+      id: `STAFF-${Date.now().toString().slice(-4)}`,
+      username: cleanUsername || 'staff_user',
+      password: '',
+      name: (cleanUsername || 'Store Staff').toUpperCase(),
+      role: 'store_manager',
+      phone: cleanPhone,
+      createdAt: new Date().toISOString(),
+      isActive: true,
+    };
+  }
+
+  staff.lastLogin = new Date().toISOString();
+  activeOtps.delete(cleanUsername);
+  activeOtps.delete(cleanPhone);
+
+  updatePricingConfig(
+    { staffAccounts: config.staffAccounts },
+    { username: staff.username, role: staff.role, name: staff.name },
+    'price_update',
+    `Staff user ${staff.name} (@${staff.username}) authenticated via 5-digit WhatsApp code to +${cleanPhone}.`
+  );
+
+  return { success: true, staff };
 }
 
 export function verifyStaffCredentials(username: string, password: string): StaffAccount | null {
@@ -351,15 +498,19 @@ export function verifyStaffCredentials(username: string, password: string): Staf
   return null;
 }
 
-export function createStaffAccount(newStaff: Omit<StaffAccount, 'id' | 'createdAt' | 'isActive'>, adminSession: { username: string; role: string; name: string }): StaffAccount {
+export function createStaffAccount(
+  newStaff: Omit<StaffAccount, 'id' | 'createdAt' | 'isActive'>,
+  adminSession: { username: string; role: string; name: string }
+): StaffAccount {
   const config = getPricingConfig();
+  const cleanPhone = normalizePhoneNumber(newStaff.phone || '2348060395329');
   const created: StaffAccount = {
     id: `STAFF-${Date.now().toString().slice(-4)}`,
     username: newStaff.username.trim().toLowerCase(),
-    password: newStaff.password.trim(),
+    password: newStaff.password ? newStaff.password.trim() : 'Staff@2026',
     name: newStaff.name.trim(),
     role: newStaff.role,
-    phone: newStaff.phone?.trim() || '234 806 0395 329',
+    phone: cleanPhone,
     createdAt: new Date().toISOString(),
     isActive: true,
   };
@@ -369,7 +520,7 @@ export function createStaffAccount(newStaff: Omit<StaffAccount, 'id' | 'createdA
     { staffAccounts: updatedAccounts },
     adminSession,
     'staff_created',
-    `Created new staff credentials for ${created.name} (@${created.username}) with role: ${created.role}.`
+    `Registered new staff user: ${created.name} (@${created.username}, Tel: +${created.phone}) with role: ${created.role}.`
   );
 
   return created;

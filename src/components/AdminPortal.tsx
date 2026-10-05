@@ -37,6 +37,7 @@ import {
   Eye,
   CreditCard,
   BadgeDollarSign,
+  X,
 } from 'lucide-react';
 import { AdminPricingManager } from './AdminPricingManager';
 import { EditionType, DurationTier, LicenseParams, GeneratedLicense, LicenseValidationResult, CustomerRecord } from '../types';
@@ -66,6 +67,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToPublic }) => {
 
   // Active view tab in admin: database is now the primary view
   const [activeTab, setActiveTab] = useState<'database' | 'pricing' | 'generate' | 'validate' | 'batch' | 'health'>('database');
+  const [isRenderDoctorOpen, setIsRenderDoctorOpen] = useState(false);
 
   // ==========================================
   // CUSTOMER DATABASE STATE
@@ -831,11 +833,11 @@ Reply to this message anytime!
         /* Authenticated Admin Management Interface */
         <div className="max-w-5xl mx-auto space-y-6">
           {/* Admin Navigation Tabs */}
-          <div className="bg-white p-2 rounded-2xl border border-slate-200/90 shadow-xs flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center gap-1.5">
+          <div className="bg-white p-2 rounded-2xl border border-slate-200/90 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 w-full md:w-auto -mx-1 px-1">
               <button
                 onClick={() => setActiveTab('database')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 whitespace-nowrap ${
                   activeTab === 'database'
                     ? 'bg-amber-600 text-white shadow-xs'
                     : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
@@ -847,7 +849,7 @@ Reply to this message anytime!
 
               <button
                 onClick={() => setActiveTab('pricing')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 whitespace-nowrap ${
                   activeTab === 'pricing'
                     ? 'bg-amber-600 text-white shadow-xs'
                     : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
@@ -859,7 +861,7 @@ Reply to this message anytime!
 
               <button
                 onClick={() => setActiveTab('generate')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 whitespace-nowrap ${
                   activeTab === 'generate'
                     ? 'bg-amber-600 text-white shadow-xs'
                     : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
@@ -871,7 +873,7 @@ Reply to this message anytime!
 
               <button
                 onClick={() => setActiveTab('validate')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 whitespace-nowrap ${
                   activeTab === 'validate'
                     ? 'bg-amber-600 text-white shadow-xs'
                     : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
@@ -883,7 +885,7 @@ Reply to this message anytime!
 
               <button
                 onClick={() => setActiveTab('batch')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 whitespace-nowrap ${
                   activeTab === 'batch'
                     ? 'bg-amber-600 text-white shadow-xs'
                     : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
@@ -894,9 +896,21 @@ Reply to this message anytime!
               </button>
             </div>
 
-            <div className="flex items-center gap-2 text-xs font-bold px-3 py-1 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-300">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>SERVER ONLINE • v3.4.2</span>
+            <div className="flex items-center gap-2 justify-between md:justify-end">
+              <button
+                type="button"
+                onClick={() => setIsRenderDoctorOpen(true)}
+                className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 transition-colors shadow-2xs"
+                title="Diagnose Render GitHub Auto-Update Access"
+              >
+                <AlertCircle className="w-3.5 h-3.5 text-amber-700" />
+                <span>Render Auto-Deploy Fix</span>
+              </button>
+
+              <div className="flex items-center gap-2 text-xs font-bold px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-300 shrink-0">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>SERVER ONLINE • v3.4.2</span>
+              </div>
             </div>
           </div>
 
@@ -1200,6 +1214,150 @@ Reply to this message anytime!
                 </p>
               </div>
 
+              {/* Master Key Generator Format Explained Specification Table */}
+              <div className="bg-slate-950 text-slate-300 rounded-2xl p-5 border border-slate-800 space-y-4 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h4 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
+                      <span>Master Key Generator Format Explained</span>
+                    </h4>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      The Master License Key follows a 5-chunk hyphen-separated cryptographic standard:
+                    </p>
+                  </div>
+                  <span className="text-[11px] font-mono bg-purple-950 text-purple-300 border border-purple-500/40 px-3 py-1 rounded-lg font-bold self-start sm:self-auto">
+                    Chunk 1 - Chunk 2 - Chunk 3 - Chunk 4 - Chunk 5
+                  </span>
+                </div>
+
+                {/* Table of the 5 Chunks */}
+                <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-900/80">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-800/90 text-slate-200 border-b border-slate-700/80 text-[11px] font-bold">
+                        <th className="py-2.5 px-3">Chunk</th>
+                        <th className="py-2.5 px-3">Length & Type</th>
+                        <th className="py-2.5 px-3">Name</th>
+                        <th className="py-2.5 px-3">Values / Description</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800 text-[11px] font-medium text-slate-300">
+                      <tr>
+                        <td className="py-2.5 px-3 font-mono font-bold text-amber-400">Chunk 1</td>
+                        <td className="py-2.5 px-3 font-mono text-slate-300">4 Chars (Alphanumeric)</td>
+                        <td className="py-2.5 px-3 font-bold text-white">Edition Code</td>
+                        <td className="py-2.5 px-3 leading-relaxed">
+                          • <strong className="text-white font-mono">BASC</strong> = Basic Edition (Desktop Standalone POS)<br />
+                          • <strong className="text-white font-mono">STND</strong> = Standard Edition (Wi-Fi LAN + Kitchen KDS + Remote Director)<br />
+                          • <strong className="text-white font-mono">ENTR</strong> = Enterprise Edition (Omnichannel Mobile Store + VIP Meal Cards + Recipe Auto-deductions)<br />
+                          • <strong className="text-white font-mono">TRAL</strong> = 7-Day Free Trial Evaluation
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="py-2.5 px-3 font-mono font-bold text-amber-400">Chunk 2</td>
+                        <td className="py-2.5 px-3 font-mono text-slate-300">5 Chars (Hexadecimal)</td>
+                        <td className="py-2.5 px-3 font-bold text-white">Entropy Hash A</td>
+                        <td className="py-2.5 px-3">
+                          Derived from client phone number hash + entropy timestamp (e.g. <code className="text-purple-300 font-mono font-bold">8F3A2</code>)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="py-2.5 px-3 font-mono font-bold text-amber-400">Chunk 3</td>
+                        <td className="py-2.5 px-3 font-mono text-slate-300">5 Chars (Hexadecimal)</td>
+                        <td className="py-2.5 px-3 font-bold text-white">Entropy Hash B</td>
+                        <td className="py-2.5 px-3">
+                          Derived from client phone number + package salt (e.g. <code className="text-purple-300 font-mono font-bold">9C14B</code>)
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="py-2.5 px-3 font-mono font-bold text-amber-400">Chunk 4</td>
+                        <td className="py-2.5 px-3 font-mono text-slate-300">2 Chars (Alphanumeric)</td>
+                        <td className="py-2.5 px-3 font-bold text-white">Duration Code</td>
+                        <td className="py-2.5 px-3 leading-relaxed">
+                          • <strong className="text-white font-mono">1Y</strong> = 1 Year License Validity<br />
+                          • <strong className="text-white font-mono">3Y</strong> = 3 Years License Validity<br />
+                          • <strong className="text-white font-mono">LF</strong> = Perpetual Lifetime Sovereign License<br />
+                          • <strong className="text-white font-mono">7D</strong> = 7-Day Trial Evaluation
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="py-2.5 px-3 font-mono font-bold text-amber-400">Chunk 5</td>
+                        <td className="py-2.5 px-3 font-mono text-slate-300">4 Chars (Hexadecimal)</td>
+                        <td className="py-2.5 px-3 font-bold text-white">HMAC Checksum</td>
+                        <td className="py-2.5 px-3">
+                          4-character cryptographic hash verifying chunks 1 through 4 against <code className="text-emerald-300 font-mono font-bold">MASTER_SECRET</code>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Concrete Examples Generated by the Algorithm */}
+                <div className="pt-1">
+                  <span className="text-[11px] font-black uppercase tracking-wider text-slate-400 block mb-2">
+                    Concrete Examples Generated by the Algorithm:
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                    <div
+                      onClick={() => {
+                        setKeyToValidate('ENTR-9B41D-5F72A-LF-9E41');
+                        setActiveTab('validate');
+                      }}
+                      className="p-3 rounded-xl bg-slate-900 border border-purple-500/50 hover:border-purple-400 cursor-pointer transition-all hover:bg-slate-800/80 group"
+                      title="Click to test in Validator"
+                    >
+                      <span className="text-[10px] text-purple-300 font-bold block mb-1">Enterprise Lifetime (Perpetual):</span>
+                      <code className="font-mono text-xs font-bold text-amber-300 group-hover:text-amber-200 block truncate">
+                        ENTR-9B41D-5F72A-LF-9E41
+                      </code>
+                    </div>
+
+                    <div
+                      onClick={() => {
+                        setKeyToValidate('STND-8F3A2-9C14B-1Y-7C49');
+                        setActiveTab('validate');
+                      }}
+                      className="p-3 rounded-xl bg-slate-900 border border-amber-500/40 hover:border-amber-400 cursor-pointer transition-all hover:bg-slate-800/80 group"
+                      title="Click to test in Validator"
+                    >
+                      <span className="text-[10px] text-amber-300 font-bold block mb-1">Standard 1-Year (Level 2):</span>
+                      <code className="font-mono text-xs font-bold text-amber-300 group-hover:text-amber-200 block truncate">
+                        STND-8F3A2-9C14B-1Y-7C49
+                      </code>
+                    </div>
+
+                    <div
+                      onClick={() => {
+                        setKeyToValidate('STND-3A9F1-7C42E-3Y-8F21');
+                        setActiveTab('validate');
+                      }}
+                      className="p-3 rounded-xl bg-slate-900 border border-slate-700 hover:border-amber-400 cursor-pointer transition-all hover:bg-slate-800/80 group"
+                      title="Click to test in Validator"
+                    >
+                      <span className="text-[10px] text-slate-300 font-bold block mb-1">Standard 3-Years:</span>
+                      <code className="font-mono text-xs font-bold text-amber-300 group-hover:text-amber-200 block truncate">
+                        STND-3A9F1-7C42E-3Y-8F21
+                      </code>
+                    </div>
+
+                    <div
+                      onClick={() => {
+                        setKeyToValidate('BASC-4D7A1-8E29F-1Y-C83E');
+                        setActiveTab('validate');
+                      }}
+                      className="p-3 rounded-xl bg-slate-900 border border-blue-500/40 hover:border-blue-400 cursor-pointer transition-all hover:bg-slate-800/80 group"
+                      title="Click to test in Validator"
+                    >
+                      <span className="text-[10px] text-blue-300 font-bold block mb-1">Basic 1-Year (Level 1):</span>
+                      <code className="font-mono text-xs font-bold text-amber-300 group-hover:text-amber-200 block truncate">
+                        BASC-4D7A1-8E29F-1Y-C83E
+                      </code>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
                 {/* Form Controls */}
                 <div className="md:col-span-7 space-y-4">
@@ -1469,7 +1627,7 @@ Reply to this message anytime!
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="e.g. KYLX-STD-2026-B8A1-3T-8F-7CA4-91E2"
+                  placeholder="e.g. STND-8F3A2-9C14B-1Y-7C49 or ENTR-9B41D-5F72A-LF-9E41"
                   value={keyToValidate}
                   onChange={(e) => setKeyToValidate(e.target.value)}
                   className="flex-1 bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 font-mono text-xs font-bold text-slate-900 focus:outline-none focus:border-amber-600 focus:bg-white"
@@ -1899,6 +2057,130 @@ Reply to this message anytime!
                     </button>
                   </div>
                 </form>
+              </div>
+            </div>
+          )}
+          {/* ========================================================
+              MODAL: RENDER GITHUB AUTO-UPDATE ACCESS DOCTOR
+          ======================================================== */}
+          {isRenderDoctorOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-xs">
+              <div className="bg-white rounded-3xl p-5 sm:p-6 max-w-lg w-full shadow-2xl border border-slate-200 space-y-4 max-h-[92vh] overflow-y-auto">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+                  <div className="flex items-center gap-2">
+                    <div className="w-9 h-9 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-bold">
+                      <AlertCircle className="w-5 h-5 text-amber-700" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm sm:text-base font-black text-slate-900">Render GitHub Access Resolution</h4>
+                      <span className="text-[10px] text-slate-500 font-mono">Resolves "looks like we don't have access to your repo"</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsRenderDoctorOpen(false)}
+                    className="text-slate-400 hover:text-slate-600 p-1"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-3 bg-amber-50 border border-amber-300 rounded-2xl text-xs space-y-1.5">
+                  <span className="font-black text-amber-950 block">The Render Warning:</span>
+                  <div className="p-2 rounded-xl bg-white border border-amber-200 font-mono text-[11px] text-amber-900">
+                    "It looks like we don't have access to your repo, but we'll try to clone it anyway"
+                  </div>
+                  <p className="text-[11px] text-amber-900 font-medium leading-relaxed">
+                    <strong>Why this blocks auto-updates:</strong> Render needs GitHub App permissions on{' '}
+                    <code className="bg-amber-100 px-1 py-0.5 rounded font-mono font-bold">kistechng-dev/kaylix-Restaurant-Suitepro</code>{' '}
+                    to install the commit webhook. Without this webhook, Render cannot detect git pushes and will not auto-deploy.
+                  </p>
+                </div>
+
+                <div className="space-y-3 text-xs">
+                  <h5 className="font-black text-slate-900 uppercase text-[11px] tracking-wider">
+                    3-Step Solution (Takes 60 Seconds):
+                  </h5>
+
+                  <div className="space-y-2">
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2.5">
+                      <div className="w-6 h-6 rounded-full bg-slate-800 text-white font-black text-xs flex items-center justify-center shrink-0">
+                        1
+                      </div>
+                      <div className="space-y-1">
+                        <strong className="text-slate-900 block">Grant Render App Access in GitHub:</strong>
+                        <p className="text-slate-600 text-[11px]">
+                          Visit GitHub Application Settings:{' '}
+                          <a
+                            href="https://github.com/settings/installations"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-amber-800 underline font-mono font-bold hover:text-amber-950"
+                          >
+                            github.com/settings/installations
+                          </a>
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          Click <strong>Configure</strong> next to <strong>Render</strong>, scroll down to <strong>Repository Access</strong>, and select <strong>"All repositories"</strong> or check <strong>kaylix-Restaurant-Suitepro</strong>, then click <strong>Save</strong>.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2.5">
+                      <div className="w-6 h-6 rounded-full bg-slate-800 text-white font-black text-xs flex items-center justify-center shrink-0">
+                        2
+                      </div>
+                      <div className="space-y-1">
+                        <strong className="text-slate-900 block">Verify Branch in Render Dashboard:</strong>
+                        <p className="text-slate-600 text-[11px]">
+                          In Render Dashboard ({' '}
+                          <a
+                            href="https://dashboard.render.com"
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-amber-800 underline font-mono font-bold hover:text-amber-950"
+                          >
+                            dashboard.render.com
+                          </a>{' '}
+                          ), click <strong>kaylix-restaurant-suitepro</strong> &rarr; <strong>Settings</strong>. Verify that <strong>Branch</strong> is set to{' '}
+                          <code className="bg-slate-200 px-1 py-0.5 rounded font-mono font-bold">main</code> (or your active branch).
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-start gap-2.5">
+                      <div className="w-6 h-6 rounded-full bg-emerald-700 text-white font-black text-xs flex items-center justify-center shrink-0">
+                        3
+                      </div>
+                      <div className="space-y-1">
+                        <strong className="text-slate-900 block">Trigger Manual Deploy & Test Auto-Deploy:</strong>
+                        <p className="text-slate-600 text-[11px]">
+                          Click <strong>Manual Deploy</strong> &rarr; <strong>Clear build cache & deploy</strong>. Once deployed, the warning will disappear and every subsequent git push will automatically update the website!
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 flex items-center justify-between">
+                  <a
+                    href="https://github.com/settings/installations"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-bold hover:bg-slate-800"
+                  >
+                    <span>Open GitHub Installations</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsRenderDoctorOpen(false)}
+                    className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-black shadow-2xs"
+                  >
+                    Got It, Close Guide
+                  </button>
+                </div>
               </div>
             </div>
           )}

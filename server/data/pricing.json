@@ -129,6 +129,26 @@
   ],
   "auditLog": [
     {
+      "id": "LOG-1791028404352-111",
+      "timestamp": "2026-10-03T11:53:24.352Z",
+      "formattedDate": "03 Oct 2026, 12:53:24 pm WAT",
+      "username": "admin",
+      "role": "admin",
+      "staffName": "Chief Systems Administrator",
+      "action": "staff_created",
+      "summary": "Registered new staff user: Ikeja Retail Officer (@ikeja_pos, Tel: +2348060395329) with role: store_manager."
+    },
+    {
+      "id": "LOG-1791028396374-331",
+      "timestamp": "2026-10-03T11:53:16.374Z",
+      "formattedDate": "03 Oct 2026, 12:53:16 pm WAT",
+      "username": "store_manager",
+      "role": "store_manager",
+      "staffName": "Central Warehouse & Store Manager",
+      "action": "price_update",
+      "summary": "Staff user Central Warehouse & Store Manager (@store_manager) authenticated via 5-digit WhatsApp code to +2348060395329."
+    },
+    {
       "id": "LOG-1790963731968-271",
       "timestamp": "2026-10-02T17:55:31.968Z",
       "formattedDate": "02 Oct 2026, 06:55:31 pm WAT",
@@ -179,7 +199,7 @@
       "phone": "234 806 0395 329",
       "createdAt": "2026-10-01T08:00:00.000Z",
       "isActive": true,
-      "lastLogin": "2026-10-02T17:55:31.967Z"
+      "lastLogin": "2026-10-03T11:53:16.373Z"
     },
     {
       "id": "STAFF-003",
@@ -190,11 +210,21 @@
       "phone": "234 806 0395 329",
       "createdAt": "2026-10-01T08:00:00.000Z",
       "isActive": true
+    },
+    {
+      "id": "STAFF-4352",
+      "username": "ikeja_pos",
+      "password": "Ikeja@2026",
+      "name": "Ikeja Retail Officer",
+      "role": "store_manager",
+      "phone": "2348060395329",
+      "createdAt": "2026-10-03T11:53:24.352Z",
+      "isActive": true
     }
   ],
-  "updatedAt": "2026-10-02T17:55:31.968Z",
-  "updatedBy": "Central Warehouse & Store Manager",
-  "updatedByRole": "store_manager",
+  "updatedAt": "2026-10-03T11:53:24.352Z",
+  "updatedBy": "Chief Systems Administrator",
+  "updatedByRole": "admin",
   "hardware": {
     "thermal-printer-80mm": {
       "priceNGN": 48000,
