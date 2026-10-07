@@ -273,9 +273,9 @@ export const MasterKeyGenerator: React.FC<MasterKeyGeneratorProps> = ({
   const handleSendLicenseViaWhatsApp = () => {
     if (!generatedResult) return;
     const msg = `*OFFICIAL SOFTWARE LICENSE CERTIFICATE* 📜
-*Kaylix Kitchen & Eatery Management System*
+*KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2*
 ----------------------------------------
-*Registered Eatery:* ${generatedResult.businessName}
+*Registered Client:* ${generatedResult.businessName}
 *Package:* ${generatedResult.edition.toUpperCase()} PACKAGE
 *Tenure:* ${generatedResult.expiresAt}
 *Backend License Key:* \`${generatedResult.licenseKey}\`
@@ -287,7 +287,7 @@ export const MasterKeyGenerator: React.FC<MasterKeyGeneratorProps> = ({
 ${generatedResult.modules.map((m) => `• ${m}`).join('\n')}
 
 *Instructions to Activate:*
-1. Open Kaylix POS -> Settings -> License Activation.
+1. Open KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2 -> Settings -> License Activation.
 2. Enter Registered Name: "${generatedResult.businessName}"
 3. Enter License Key: "${generatedResult.licenseKey}"
 4. Click "Verify & Activate".

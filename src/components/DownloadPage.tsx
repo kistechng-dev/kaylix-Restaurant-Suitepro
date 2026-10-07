@@ -260,20 +260,20 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
         <div className="text-center max-w-2xl mx-auto space-y-2.5">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300">
             <Download className="w-3.5 h-3.5 text-amber-700" />
-            <span>Single Master Installer Download</span>
+            <span>Official Distribution Hub</span>
           </div>
-          <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
-            Download Kaylix POS All-in-One Suite
+          <h1 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight font-mono">
+            KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 font-medium leading-relaxed">
-            Only 1 universal software file powers all restaurant setups. Download the complete package once via Google Drive or direct browser bundle, then register below to pick whatever plan you want.
+            High-speed multi-purpose POS & eatery management system. Download the official native Windows setup (.msi), universal portable package (.zip), or cloud mirror.
           </p>
         </div>
 
         {/* SECTION 1: THE 1 ALL-IN-ONE DOWNLOAD CARD */}
         <div className="bg-white border-2 border-amber-400/90 rounded-3xl p-5 sm:p-8 shadow-md relative overflow-hidden">
           <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-500 to-orange-500 text-white text-[10px] sm:text-xs font-black px-4 py-1 rounded-bl-2xl uppercase tracking-wider shadow-xs">
-            1 Universal Installer File
+            Official Release v3.4.2
           </div>
 
           <div className="space-y-6">
@@ -284,11 +284,11 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
                   <Package className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-lg sm:text-xl font-black text-slate-900">
-                    Kaylix Kitchen POS Suite — All-in-One Setup
+                  <h2 className="text-lg sm:text-xl font-black text-slate-900 font-mono">
+                    KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2
                   </h2>
                   <p className="text-xs text-slate-500 font-medium">
-                    Build: <strong className="text-slate-800 font-mono">v3.4.2 (Production Release)</strong> • Size: <strong className="text-slate-800 font-mono">78.4 MB</strong> • Target: <strong className="text-slate-800">Windows 11/10/8.1/7 & Android</strong>
+                    Native MSI: <strong className="text-slate-800 font-mono">1.93 MB</strong> • Portable ZIP: <strong className="text-slate-800 font-mono">1.59 MB</strong> • Target: <strong className="text-slate-800">Windows 11/10/8.1/7 & Android</strong>
                   </p>
                 </div>
               </div>
@@ -297,6 +297,47 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span>100% Offline-First POS</span>
               </div>
+            </div>
+
+            {/* Quick Live Direct Download Pills */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl">
+              <a
+                href="/downloads/KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2.msi"
+                download="KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2.msi"
+                className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200 hover:border-blue-500 hover:bg-blue-50/40 transition-all group"
+              >
+                <div className="flex items-center gap-2.5 truncate">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-black shrink-0">
+                    MSI
+                  </div>
+                  <div className="truncate text-left">
+                    <span className="text-xs font-black text-slate-900 block truncate group-hover:text-blue-700">
+                      Windows Native Setup (.MSI)
+                    </span>
+                    <span className="text-[11px] text-slate-500 font-mono">1.93 MB • 1-Click Install</span>
+                  </div>
+                </div>
+                <Download className="w-4 h-4 text-blue-600 shrink-0 group-hover:scale-110 transition-transform" />
+              </a>
+
+              <a
+                href="/downloads/KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2.zip"
+                download="KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2.zip"
+                className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200 hover:border-amber-500 hover:bg-amber-50/40 transition-all group"
+              >
+                <div className="flex items-center gap-2.5 truncate">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center font-black shrink-0">
+                    ZIP
+                  </div>
+                  <div className="truncate text-left">
+                    <span className="text-xs font-black text-slate-900 block truncate group-hover:text-amber-800">
+                      Universal Portable Archive (.ZIP)
+                    </span>
+                    <span className="text-[11px] text-slate-500 font-mono">1.59 MB • Zero Install</span>
+                  </div>
+                </div>
+                <Download className="w-4 h-4 text-amber-600 shrink-0 group-hover:scale-110 transition-transform" />
+              </a>
             </div>
 
             {/* Everything Included in this 1 File */}

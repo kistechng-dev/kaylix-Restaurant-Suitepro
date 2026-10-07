@@ -40,6 +40,7 @@ import {
   X,
 } from 'lucide-react';
 import { AdminPricingManager } from './AdminPricingManager';
+import { DistributionHub } from './DistributionHub';
 import { EditionType, DurationTier, LicenseParams, GeneratedLicense, LicenseValidationResult, CustomerRecord } from '../types';
 import { formatLicenseCertificate, generateHWID } from '../utils/licenseGenerator';
 import { VENDOR_CONTACT } from '../data/mockData';
@@ -65,8 +66,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToPublic }) => {
   const [whatsappTriggerUrl, setWhatsappTriggerUrl] = useState<string | null>(null);
   const [smsTriggerUrl, setSmsTriggerUrl] = useState<string | null>(null);
 
-  // Active view tab in admin: database is now the primary view
-  const [activeTab, setActiveTab] = useState<'database' | 'pricing' | 'generate' | 'validate' | 'batch' | 'health'>('database');
+  // Active view tab in admin: distribution hub and database are top views
+  const [activeTab, setActiveTab] = useState<'database' | 'distribution' | 'pricing' | 'generate' | 'validate' | 'batch' | 'health'>('distribution');
   const [isRenderDoctorOpen, setIsRenderDoctorOpen] = useState(false);
 
   // ==========================================
@@ -476,7 +477,7 @@ Thank you for your subscription payment! Here are your official license credenti
 \`${customer.licenseCode}\`
 
 *SETUP INSTRUCTIONS:*
-1. Launch Kaylix Kitchen & Eatery POS on your computer.
+1. Launch KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2 on your computer.
 2. Go to *Settings > License Activation*.
 3. Paste your official license key shown above.
 4. Click *Activate Software*.
@@ -624,24 +625,58 @@ Reply to this message anytime!
           </div>
         </div>
 
-        {isAuthenticated && (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={fetchCustomerDatabase}
-              className="p-2 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-colors"
-              title="Refresh Data"
+        {/* Top Header Actions */}
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Quick Navigation Direct Download Buttons in Header */}
+          <div className="flex items-center gap-1.5 bg-white p-1 rounded-xl border border-slate-300 shadow-2xs">
+            <a
+              href="/downloads/KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2.msi"
+              download="KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2.msi"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-black shadow-2xs transition-all active:scale-95"
+              title="Download Windows Native Setup (1.93 MB)"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isLoadingCustomers ? 'animate-spin' : ''}`} />
-            </button>
-            <button
-              onClick={() => setIsAuthenticated(false)}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 text-xs font-bold transition-colors"
+              <Download className="w-3.5 h-3.5" />
+              <span>.MSI (1.93 MB)</span>
+            </a>
+            <a
+              href="/downloads/KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2.zip"
+              download="KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2.zip"
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[11px] font-black shadow-2xs transition-all active:scale-95"
+              title="Download Universal Portable Archive (1.59 MB)"
             >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Lock / Logout</span>
-            </button>
+              <Download className="w-3.5 h-3.5" />
+              <span>.ZIP (1.59 MB)</span>
+            </a>
+            {isAuthenticated && (
+              <button
+                onClick={() => setActiveTab('distribution')}
+                className="text-[11px] font-bold text-slate-700 hover:text-amber-800 px-1.5 py-1"
+                title="View Full Hub"
+              >
+                Hub &rarr;
+              </button>
+            )}
           </div>
-        )}
+
+          {isAuthenticated && (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={fetchCustomerDatabase}
+                className="p-2 rounded-xl bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-bold transition-colors"
+                title="Refresh Data"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isLoadingCustomers ? 'animate-spin' : ''}`} />
+              </button>
+              <button
+                onClick={() => setIsAuthenticated(false)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 text-xs font-bold transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Lock / Logout</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Security Gate / Login Screen with Phone 2FA Recovery */}
@@ -848,6 +883,18 @@ Reply to this message anytime!
               </button>
 
               <button
+                onClick={() => setActiveTab('distribution')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 whitespace-nowrap ${
+                  activeTab === 'distribution'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                <Download className="w-4 h-4" />
+                <span>Downloads (.MSI & .ZIP)</span>
+              </button>
+
+              <button
                 onClick={() => setActiveTab('pricing')}
                 className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 whitespace-nowrap ${
                   activeTab === 'pricing'
@@ -913,6 +960,11 @@ Reply to this message anytime!
               </div>
             </div>
           </div>
+
+          {/* ==========================================
+              TAB: OFFICIAL .MSI AND .ZIP DISTRIBUTION HUB
+          ========================================== */}
+          {activeTab === 'distribution' && <DistributionHub />}
 
           {/* ==========================================
               TAB: PLANS & HARDWARE PRICING

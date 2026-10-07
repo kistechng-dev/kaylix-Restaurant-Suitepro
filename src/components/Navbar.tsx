@@ -32,7 +32,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="bg-white text-amber-800 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider shadow-2xs">
               Release v3.4.2
             </span>
-            <span className="font-medium text-white/95">Kaylix Kitchen & POS Suite • 100% Offline-First</span>
+            <span className="font-medium text-white/95">KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2 • 100% Offline-First</span>
           </div>
           <div className="flex items-center justify-end gap-4 text-xs font-semibold">
             <a
@@ -62,15 +62,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
           <div>
             <div className="flex items-center gap-1">
-              <span className="text-base sm:text-lg font-black tracking-tight text-slate-900 font-sans">
-                KAYLIX<span className="text-amber-600">.KITCHEN</span>
+              <span className="text-sm sm:text-base font-black tracking-tight text-slate-900 font-mono">
+                KAYLIX<span className="text-amber-600">_POS_PRO</span>
               </span>
               <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300 uppercase tracking-wider">
-                POS
+                3.4.2
               </span>
             </div>
-            <p className="hidden sm:block text-[11px] text-slate-600 font-semibold leading-none mt-0.5">
-              Kitchen & Eatery Management
+            <p className="hidden sm:block text-[10px] text-slate-600 font-semibold leading-none mt-0.5">
+              KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2
             </p>
           </div>
         </div>

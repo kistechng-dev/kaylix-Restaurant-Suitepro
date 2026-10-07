@@ -112,11 +112,11 @@ export const Hero: React.FC<HeroProps> = ({
       <div className="max-w-5xl mx-auto px-3.5 sm:px-6 relative z-10">
         {/* Anti-Slop Unboxed Editorial Metadata Line */}
         <div className="flex flex-wrap items-center justify-center gap-2 text-xs font-semibold text-slate-600 mb-3 text-center">
-          <span className="text-amber-800 font-bold">Kaylix POS Suite v3.4.2</span>
+          <span className="text-amber-800 font-bold font-mono">KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2</span>
           <span aria-hidden="true" className="text-slate-400">·</span>
-          <span className="text-slate-700">100% Offline-First</span>
+          <span className="text-slate-700">100% Offline-First Multi-Purpose POS</span>
           <span aria-hidden="true" className="text-slate-400">·</span>
-          <span className="text-slate-700">500+ Nigerian Eateries</span>
+          <span className="text-slate-700">500+ Active Deployments</span>
         </div>
 
         {/* Main Heading */}

@@ -1,6 +1,6 @@
 {
-  "name": "Kaylix Kitchen & Eatery Management Suite",
-  "description": "Official download portal, edition selector (Trial, Basic, Standard, Enterprise), payment bank details, WhatsApp order sender, and Master License Key Generator.",
+  "name": "KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2",
+  "description": "KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2 official download distribution hub, Windows native .MSI setup, universal portable .ZIP archive, and licensing console.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

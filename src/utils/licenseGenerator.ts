@@ -435,7 +435,7 @@ ${lic.modules.map((m) => `[ACTIVE] ${m}`).join('\n')}
 
 TERMS OF DEPLOYMENT:
 --------------------------------------------------------------------------------
-This cryptographic key grants full offline operation of Kaylix Kitchen POS.
+This cryptographic key grants full offline operation of KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2.
 No internet connection is required for day-to-day sales, billing, and KDS routing.
 Maintain this certificate in your administrative security vault.
 

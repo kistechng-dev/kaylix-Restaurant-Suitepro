@@ -5,7 +5,7 @@ export const EDITIONS: Record<string, EditionDetail> = {
     id: 'trial',
     name: 'Trial Plan',
     badge: '7-Day Free Evaluation',
-    tagline: 'Experience the full power of Kaylix Kitchen for 7 days with zero upfront commitment.',
+    tagline: 'Experience the full power of KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2 for 7 days with zero upfront commitment.',
     defaultTier: '7_days',
     plans: {
       '7_days': {

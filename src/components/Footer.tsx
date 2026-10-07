@@ -32,12 +32,12 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToPage, onScrollToSect
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-black shadow-xs">
                 <UtensilsCrossed className="w-4 h-4" />
               </div>
-              <span className="text-base font-black text-slate-900 tracking-tight">
-                KAYLIX<span className="text-amber-600">.KITCHEN</span>
+              <span className="text-sm font-black text-slate-900 tracking-tight font-mono">
+                KAYLIX<span className="text-amber-600">_POS_PRO_3.4.2</span>
               </span>
             </div>
             <p className="text-slate-600 text-xs leading-relaxed max-w-xs font-medium">
-              The premier Point of Sale, Kitchen Display, and Recipe Inventory system engineered for restaurants, eateries, bars, lounges, and multi-branch food chains.
+              KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2 — The premier Point of Sale, inventory, and billing system engineered for retail, eateries, and modern businesses.
             </p>
             <div className="flex items-center gap-1.5 text-slate-800 font-mono text-[11px] font-bold">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
