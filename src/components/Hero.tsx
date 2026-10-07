@@ -26,6 +26,7 @@ interface HeroProps {
   onScrollToSection?: (sectionId: string) => void;
   onOrderHardwareOnly?: (addonId?: string) => void;
   currency: 'NGN' | 'USD';
+  isPhoneMode?: boolean;
 }
 
 export const Hero: React.FC<HeroProps> = ({
@@ -34,6 +35,7 @@ export const Hero: React.FC<HeroProps> = ({
   onScrollToSection,
   onOrderHardwareOnly,
   currency,
+  isPhoneMode = false,
 }) => {
   const handleNav = (target: PageType | string) => {
     if (onNavigateToPage) {
@@ -47,6 +49,7 @@ export const Hero: React.FC<HeroProps> = ({
     }
   };
   const [activeTab, setActiveTab] = useState<'pos' | 'kds' | 'recipe' | 'sales'>('pos');
+  const [mobilePosTab, setMobilePosTab] = useState<'dishes' | 'ticket'>('dishes');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [copiedBank, setCopiedBank] = useState<string | null>(null);
 
@@ -136,41 +139,43 @@ export const Hero: React.FC<HeroProps> = ({
           </p>
 
           {/* Action CTAs */}
-          <div className="mt-5 sm:mt-6 flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 w-full max-w-2xl mx-auto">
+          <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row items-center justify-center gap-2.5 sm:gap-3 w-full max-w-2xl mx-auto">
             <button
               onClick={onDownloadTrial}
-              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 transition-all active:scale-95"
+              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20 transition-all active:scale-95"
             >
               <Download className="w-4 h-4 stroke-[2.8]" />
-              <span>Download Free Trial & Proceed to Order Sender</span>
+              <span>Download Free Trial & Proceed to Order</span>
               <span className="text-[11px] bg-white/20 px-1.5 py-0.2 rounded font-mono font-medium">
                 .zip
               </span>
             </button>
 
-            <button
-              onClick={() => handleNav('plan')}
-              className="w-full sm:w-auto px-5 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-amber-600/20 transition-all active:scale-95"
-            >
-              <Package className="w-4 h-4" />
-              <span>Choose Hospitality Plan</span>
-            </button>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <button
+                onClick={() => handleNav('plan')}
+                className="flex-1 sm:flex-initial px-4 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md shadow-amber-600/20 transition-all active:scale-95"
+              >
+                <Package className="w-4 h-4" />
+                <span>Choose Plan</span>
+              </button>
 
-            <button
-              onClick={() => (onOrderHardwareOnly ? onOrderHardwareOnly() : handleNav('order'))}
-              className="w-full sm:w-auto px-4 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-2xs transition-all active:scale-95"
-            >
-              <Printer className="w-4 h-4 text-amber-400" />
-              <span>Buy Hardware Add-ons</span>
-            </button>
+              <button
+                onClick={() => (onOrderHardwareOnly ? onOrderHardwareOnly() : handleNav('order'))}
+                className="flex-1 sm:flex-initial px-3.5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-2xs transition-all active:scale-95"
+              >
+                <Printer className="w-4 h-4 text-amber-400" />
+                <span>Hardware</span>
+              </button>
 
-            <button
-              onClick={() => handleNav('order')}
-              className="w-full sm:w-auto px-4 py-3 rounded-xl bg-white hover:bg-slate-50 text-emerald-800 border border-emerald-400 font-bold text-sm flex items-center justify-center gap-2 shadow-2xs transition-all active:scale-95"
-            >
-              <MessageSquare className="w-4 h-4 text-emerald-600" />
-              <span>My Order</span>
-            </button>
+              <button
+                onClick={() => handleNav('order')}
+                className="flex-1 sm:flex-initial px-3.5 py-3 rounded-xl bg-white hover:bg-slate-50 text-emerald-800 border border-emerald-400 font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-2xs transition-all active:scale-95"
+              >
+                <MessageSquare className="w-4 h-4 text-emerald-600" />
+                <span>My Order</span>
+              </button>
+            </div>
           </div>
 
           {/* Mobile Quick-Action Chips Scroller (Tactile Thumb Experience) */}
@@ -307,10 +312,197 @@ export const Hero: React.FC<HeroProps> = ({
 
           {/* Interactive Tab Body */}
           <div className="p-3 sm:p-5 bg-slate-50 min-h-[380px]">
-            {activeTab === 'pos' && (
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-5">
+            {activeTab === 'pos' && isPhoneMode && (
+              <div className="space-y-3">
+                {/* Mobile View Toggle */}
+                <div className="flex items-center gap-1.5 p-1 bg-white border border-slate-200 rounded-xl shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={() => setMobilePosTab('dishes')}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                      mobilePosTab === 'dishes'
+                        ? 'bg-amber-600 text-white shadow-2xs font-black'
+                        : 'text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>🍽️ Menu Dishes ({6})</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMobilePosTab('ticket')}
+                    className={`flex-1 py-2 px-3 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                      mobilePosTab === 'ticket'
+                        ? 'bg-emerald-600 text-white shadow-2xs font-black'
+                        : 'text-slate-700 hover:bg-slate-100'
+                    }`}
+                  >
+                    <span>🧾 Order Ticket</span>
+                    <span className={`px-1.5 py-0.2 rounded text-[10px] font-mono font-bold ${
+                      mobilePosTab === 'ticket' ? 'bg-emerald-800 text-white' : 'bg-emerald-100 text-emerald-900'
+                    }`}>
+                      ₦{grandTotal.toLocaleString()}
+                    </span>
+                  </button>
+                </div>
+
+                {/* 1. If mobilePosTab === 'dishes' */}
+                {mobilePosTab === 'dishes' && (
+                  <div>
+                    {/* Category Scroll */}
+                    <div className="flex gap-1.5 overflow-x-auto pb-2 text-xs mb-1">
+                      {['All Dishes', 'Rice & Specials', 'Soups & Swallows', 'Grills & Meat', 'Cocktails'].map((cat, idx) => (
+                        <span
+                          key={cat}
+                          className={`px-3 py-1.5 rounded-lg cursor-pointer whitespace-nowrap font-bold text-xs ${
+                            idx === 0
+                              ? 'bg-amber-600 text-white shadow-2xs'
+                              : 'bg-white text-slate-700 border border-slate-300 hover:text-slate-900'
+                          }`}
+                        >
+                          {cat}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Generous 2-column dish grid */}
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {[
+                        { name: 'Smokey Party Jollof', price: 2500, stock: '48 portions', tag: 'Fast Moving' },
+                        { name: 'Special Fried Rice', price: 3200, stock: '32 portions', tag: 'Chef Choice' },
+                        { name: 'Grilled Catfish Point & Kill', price: 6500, stock: '14 fresh fish', tag: 'Live Grill' },
+                        { name: 'Peppered Asun Goat Meat', price: 3500, stock: '26 portions', tag: 'Spicy' },
+                        { name: 'Egusi Soup & Pounded Yam', price: 3500, stock: '20 portions', tag: 'Traditional' },
+                        { name: 'Chapman Classic Cocktail', price: 2000, stock: 'Bar Ready', tag: 'Chilled' },
+                      ].map((item, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => handleAddDish(item)}
+                          className="bg-white border border-slate-300 rounded-xl p-3 hover:border-amber-500 cursor-pointer transition-all hover:shadow-md flex flex-col justify-between active:scale-95 shadow-2xs"
+                        >
+                          <div>
+                            <span className="text-[9px] font-extrabold text-amber-900 bg-amber-100 px-1.5 py-0.5 rounded">
+                              {item.tag}
+                            </span>
+                            <h4 className="text-xs font-black text-slate-900 mt-1.5 leading-snug line-clamp-1">{item.name}</h4>
+                            <span className="text-[10px] text-slate-600 font-medium block mt-0.5">{item.stock}</span>
+                          </div>
+                          <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between">
+                            <span className="text-xs font-black text-amber-800">₦{item.price.toLocaleString()}</span>
+                            <span className="text-[11px] bg-amber-50 text-amber-900 border border-amber-300 px-2.5 py-1 rounded-md hover:bg-amber-500 hover:text-white font-black transition-colors">
+                              + Add
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Quick Ticket Pill */}
+                    <div
+                      onClick={() => setMobilePosTab('ticket')}
+                      className="mt-3.5 p-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex items-center justify-between cursor-pointer shadow-md shadow-emerald-600/20 active:scale-98 transition-all"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center font-bold">
+                          🛒
+                        </div>
+                        <div>
+                          <span className="text-xs font-black block">Active Order: #K-0842 (4 Items)</span>
+                          <span className="text-[11px] text-emerald-100 font-mono">Table #04 • Dine-In</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono font-black text-sm">₦{grandTotal.toLocaleString()}</span>
+                        <span className="text-xs font-bold bg-white text-emerald-900 px-2 py-1 rounded-lg">View Ticket &rarr;</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. If mobilePosTab === 'ticket' */}
+                {mobilePosTab === 'ticket' && (
+                  <div className="bg-white border border-slate-300 rounded-2xl p-4 shadow-sm space-y-3">
+                    <div className="flex items-center justify-between pb-2.5 border-b border-slate-200">
+                      <div>
+                        <span className="text-[11px] font-mono font-bold text-amber-800">TABLE #04 • DINE-IN</span>
+                        <h4 className="text-sm font-black text-slate-900">Order Ticket #K-0842</h4>
+                      </div>
+                      <span className="text-[10px] bg-emerald-100 text-emerald-900 border border-emerald-300 px-2 py-0.5 rounded font-mono font-bold">
+                        GUEST: 4 SEATS
+                      </span>
+                    </div>
+
+                    <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                      {cartItems.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between text-xs py-1.5 border-b border-slate-100">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-md bg-slate-100 flex items-center justify-center font-bold text-slate-900 text-[10px]">
+                              {item.qty}
+                            </span>
+                            <span className="text-slate-800 font-semibold">{item.name}</span>
+                          </div>
+                          <span className="font-mono text-slate-900 font-bold text-xs">
+                            ₦{(item.qty * item.price).toLocaleString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Summary & Action Buttons */}
+                    <div className="pt-2 border-t border-slate-200 space-y-1.5 text-xs">
+                      <div className="flex justify-between text-slate-600 font-medium">
+                        <span>Subtotal</span>
+                        <span className="font-mono text-slate-900 font-bold">₦{subtotal.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-slate-600 font-medium">
+                        <span>VAT (7.5%)</span>
+                        <span className="font-mono text-slate-900 font-bold">₦{tax.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-sm font-black text-slate-900 pt-1.5 border-t border-slate-200">
+                        <span>Total Payable</span>
+                        <span className="font-mono text-amber-800 text-base font-black">₦{grandTotal.toLocaleString()}</span>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-1.5 pt-2">
+                        <button
+                          onClick={handlePrintKOT}
+                          className="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs py-2 px-1 rounded-xl font-bold flex items-center justify-center gap-1 transition-colors active:scale-95 shadow-2xs"
+                        >
+                          <Printer className="w-3.5 h-3.5 text-slate-600 shrink-0" />
+                          <span className="truncate">Print KOT</span>
+                        </button>
+                        <button
+                          onClick={() => showToast('Bill split between 4 guest seats!')}
+                          className="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs py-2 px-1 rounded-xl font-bold flex items-center justify-center gap-1 transition-colors active:scale-95 shadow-2xs"
+                        >
+                          <span className="truncate">Split Bill</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            showToast('Settled ₦' + grandTotal.toLocaleString() + ' via Moniepoint POS!');
+                          }}
+                          className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs py-2 px-1 rounded-xl font-bold flex items-center justify-center gap-1 shadow-xs transition-colors active:scale-95"
+                        >
+                          <span className="truncate">Settle & Close</span>
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setMobilePosTab('dishes')}
+                        className="mt-2 w-full py-2 rounded-xl border border-slate-300 text-slate-700 text-xs font-bold hover:bg-slate-50 transition-colors"
+                      >
+                        &larr; Add More Dishes from Menu
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeTab === 'pos' && !isPhoneMode && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-5">
                 {/* Left: Menu Grid */}
-                <div className="md:col-span-7">
+                <div className="lg:col-span-7">
                   <div className="flex items-center justify-between mb-2.5">
                     <div className="flex gap-1.5 overflow-x-auto pb-1 text-xs">
                       {['All Dishes', 'Rice & Specials', 'Soups & Swallows', 'Grills & Meat', 'Cocktails'].map((cat, idx) => (
@@ -361,7 +553,7 @@ export const Hero: React.FC<HeroProps> = ({
                 </div>
 
                 {/* Right: Active Order Ticket */}
-                <div className="md:col-span-5 bg-white border border-slate-300/90 rounded-xl p-3.5 sm:p-4 flex flex-col justify-between shadow-2xs">
+                <div className="lg:col-span-5 bg-white border border-slate-300/90 rounded-xl p-3.5 sm:p-4 flex flex-col justify-between shadow-2xs">
                   <div>
                     <div className="flex items-center justify-between pb-2 border-b border-slate-200">
                       <div>

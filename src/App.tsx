@@ -380,6 +380,7 @@ export default function App() {
               onNavigateToPage={navigateToPage}
               onOrderHardwareOnly={handleOrderHardwareOnly}
               currency={currency}
+              isPhoneMode={isPhoneMode}
             />
 
             {/* Gateway Cards to Next Pages */}

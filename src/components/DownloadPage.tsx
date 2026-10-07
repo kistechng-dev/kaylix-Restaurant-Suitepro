@@ -44,7 +44,6 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
   const [pricingConfig, setPricingConfig] = useState(getCustomPricing);
   const [editionsMap, setEditionsMap] = useState(getEffectiveEditions);
   const [isDownloadingZip, setIsDownloadingZip] = useState(false);
-  const [showDownloadSourcesInfo, setShowDownloadSourcesInfo] = useState(false);
 
   // Selected Plan for Registration & Activation
   const [selectedPlan, setSelectedPlan] = useState<EditionType>('trial');
@@ -373,16 +372,6 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
               </div>
             </div>
 
-            {/* File Verification & Details */}
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono text-slate-600">
-              <div className="truncate">
-                <strong className="text-slate-800">File:</strong> Kaylix_Kitchen_POS_Suite_AllInOne_v3.4.2_Setup.exe
-              </div>
-              <div className="shrink-0 text-[11px] text-slate-500">
-                SHA-256: 09bd47c94a286e11893f441029da6c1e9561b34a
-              </div>
-            </div>
-
             {/* ACTION BUTTONS (The Only Download Buttons Needed) */}
             <div className="pt-2 flex flex-col sm:flex-row gap-3">
               {/* 1. Download via Google Drive & Proceed */}
@@ -420,41 +409,6 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
                   </>
                 )}
               </button>
-            </div>
-
-            {/* Explanation: Where do these files download from? */}
-            <div className="pt-2 border-t border-slate-100">
-              <button
-                type="button"
-                onClick={() => setShowDownloadSourcesInfo(!showDownloadSourcesInfo)}
-                className="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-500 hover:text-slate-800 transition-colors"
-              >
-                <span>ℹ️ Where do "Direct Browser Download (.ZIP)" and Google Drive download from?</span>
-                <span className="text-amber-700 underline font-semibold">
-                  {showDownloadSourcesInfo ? 'Hide explanation' : 'Click to learn where files download from'}
-                </span>
-              </button>
-
-              {showDownloadSourcesInfo && (
-                <div className="mt-2.5 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2.5 animate-fadeIn">
-                  <div className="flex items-start gap-2.5">
-                    <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-900 font-bold shrink-0 text-[11px]">
-                      ☁️ Google Drive
-                    </span>
-                    <p className="text-slate-600 leading-relaxed">
-                      Downloads directly from our official <strong className="text-slate-900">Google Cloud Drive mirror</strong> storage. This gives you the pre-packaged setup executable with Google’s global high-speed CDN.
-                    </p>
-                  </div>
-                  <div className="flex items-start gap-2.5">
-                    <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 font-bold shrink-0 text-[11px]">
-                      ⚡ Direct Browser (.ZIP)
-                    </span>
-                    <p className="text-slate-600 leading-relaxed">
-                      Generated <strong className="text-slate-900">100% client-side directly inside your web browser</strong> using HTML5 in-memory packaging (JSZip). It creates your complete offline install bundle containing the HTML POS suite, Windows setup scripts, sample menu CSVs, and quickstart manuals immediately with zero server queues or third-party file locker limits.
-                    </p>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
         </div>

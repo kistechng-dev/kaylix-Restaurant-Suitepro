@@ -9,3 +9,20 @@
     -moz-osx-font-smoothing: grayscale;
   }
 }
+
+/* Phone Simulator Viewport Isolation */
+.phone-simulator-viewport {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
+}
+
+.phone-simulator-viewport .max-w-5xl {
+  max-width: 100% !important;
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+}
+
+.phone-simulator-viewport h1 {
+  word-break: break-word;
+}

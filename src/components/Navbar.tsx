@@ -25,30 +25,32 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs">
-      {/* Top Notification Bar */}
-      <div className="hidden sm:block bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 text-white text-xs font-semibold py-1.5 px-4 text-center">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="bg-white text-amber-800 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider shadow-2xs">
-              Release v3.4.2
-            </span>
-            <span className="font-medium text-white/95">KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2 • 100% Offline-First</span>
-          </div>
-          <div className="flex items-center justify-end gap-4 text-xs font-semibold">
-            <a
-              href={`https://wa.me/${VENDOR_CONTACT.whatsappNumber.replace(/[^0-9]/g, '')}`}
-              target="_blank"
-              rel="noreferrer"
-              className="hover:underline flex items-center gap-1 text-white font-bold"
-            >
-              <PhoneCall className="w-3.5 h-3.5" />
-              WhatsApp: {VENDOR_CONTACT.whatsappDisplay}
-            </a>
-            <span className="hidden md:inline text-white/60">•</span>
-            <span className="hidden md:inline text-white/90">Desk: {VENDOR_CONTACT.email}</span>
+      {/* Top Notification Bar (Desktop only, hidden in phone mode) */}
+      {!isPhoneMode && (
+        <div className="hidden sm:block bg-gradient-to-r from-amber-600 via-orange-600 to-amber-700 text-white text-xs font-semibold py-1.5 px-4 text-center">
+          <div className="max-w-5xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="bg-white text-amber-800 px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider shadow-2xs">
+                Release v3.4.2
+              </span>
+              <span className="font-medium text-white/95">KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2 • 100% Offline-First</span>
+            </div>
+            <div className="flex items-center justify-end gap-4 text-xs font-semibold">
+              <a
+                href={`https://wa.me/${VENDOR_CONTACT.whatsappNumber.replace(/[^0-9]/g, '')}`}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:underline flex items-center gap-1 text-white font-bold"
+              >
+                <PhoneCall className="w-3.5 h-3.5" />
+                WhatsApp: {VENDOR_CONTACT.whatsappDisplay}
+              </a>
+              <span className="hidden md:inline text-white/60">•</span>
+              <span className="hidden md:inline text-white/90">Desk: {VENDOR_CONTACT.email}</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Main Navbar */}
       <div className="max-w-5xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
@@ -69,74 +71,78 @@ export const Navbar: React.FC<NavbarProps> = ({
                 3.4.2
               </span>
             </div>
-            <p className="hidden sm:block text-[10px] text-slate-600 font-semibold leading-none mt-0.5">
-              KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2
-            </p>
+            {!isPhoneMode && (
+              <p className="hidden sm:block text-[10px] text-slate-600 font-semibold leading-none mt-0.5">
+                KAYLIX_MULTI_PURPOSE_POS_PRO_3.4.2
+              </p>
+            )}
           </div>
         </div>
 
-        {/* Multi-Page Navigation Links (Desktop) */}
-        <nav className="hidden md:flex items-center gap-1.5 text-xs sm:text-sm font-semibold">
-          <button
-            onClick={() => onNavigateToPage('tour')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
-              currentPage === 'tour'
-                ? 'bg-amber-100 text-amber-950 font-bold shadow-2xs'
-                : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
-            }`}
-          >
-            <Flame className="w-3.5 h-3.5 text-amber-600" />
-            <span>POS Tour</span>
-          </button>
+        {/* Multi-Page Navigation Links (Desktop only, hidden in phone mode) */}
+        {!isPhoneMode && (
+          <nav className="hidden md:flex items-center gap-1.5 text-xs sm:text-sm font-semibold">
+            <button
+              onClick={() => onNavigateToPage('tour')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+                currentPage === 'tour'
+                  ? 'bg-amber-100 text-amber-950 font-bold shadow-2xs'
+                  : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
+              }`}
+            >
+              <Flame className="w-3.5 h-3.5 text-amber-600" />
+              <span>POS Tour</span>
+            </button>
 
-          <button
-            onClick={() => onNavigateToPage('plan')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
-              currentPage === 'plan'
-                ? 'bg-amber-100 text-amber-950 font-bold shadow-2xs'
-                : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
-            }`}
-          >
-            <Package className="w-3.5 h-3.5 text-amber-600" />
-            <span>Plan Packages</span>
-          </button>
+            <button
+              onClick={() => onNavigateToPage('plan')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+                currentPage === 'plan'
+                  ? 'bg-amber-100 text-amber-950 font-bold shadow-2xs'
+                  : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
+              }`}
+            >
+              <Package className="w-3.5 h-3.5 text-amber-600" />
+              <span>Plan Packages</span>
+            </button>
 
-          <button
-            onClick={() => onNavigateToPage('download')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
-              currentPage === 'download'
-                ? 'bg-amber-100 text-amber-950 font-bold shadow-2xs'
-                : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
-            }`}
-          >
-            <Download className="w-3.5 h-3.5 text-amber-600" />
-            <span>Download</span>
-          </button>
+            <button
+              onClick={() => onNavigateToPage('download')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+                currentPage === 'download'
+                  ? 'bg-amber-100 text-amber-950 font-bold shadow-2xs'
+                  : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
+              }`}
+            >
+              <Download className="w-3.5 h-3.5 text-amber-600" />
+              <span>Download</span>
+            </button>
 
-          <button
-            onClick={() => onNavigateToPage('banks')}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
-              currentPage === 'banks'
-                ? 'bg-amber-100 text-amber-950 font-bold shadow-2xs'
-                : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
-            }`}
-          >
-            <Building2 className="w-3.5 h-3.5 text-amber-600" />
-            <span>Bank Details</span>
-          </button>
+            <button
+              onClick={() => onNavigateToPage('banks')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+                currentPage === 'banks'
+                  ? 'bg-amber-100 text-amber-950 font-bold shadow-2xs'
+                  : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5 text-amber-600" />
+              <span>Bank Details</span>
+            </button>
 
-          <button
-            onClick={() => onNavigateToPage('order')}
-            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-all ${
-              currentPage === 'order'
-                ? 'bg-emerald-600 text-white font-bold shadow-sm'
-                : 'text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50 font-bold'
-            }`}
-          >
-            <MessageSquare className="w-3.5 h-3.5" />
-            <span>My Order</span>
-          </button>
-        </nav>
+            <button
+              onClick={() => onNavigateToPage('order')}
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg transition-all ${
+                currentPage === 'order'
+                  ? 'bg-emerald-600 text-white font-bold shadow-sm'
+                  : 'text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50 font-bold'
+              }`}
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>My Order</span>
+            </button>
+          </nav>
+        )}
 
         {/* Action Controls */}
         <div className="flex items-center gap-1.5 sm:gap-2">
