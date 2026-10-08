@@ -38,6 +38,9 @@ import {
   CreditCard,
   BadgeDollarSign,
   X,
+  Paperclip,
+  Receipt,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { AdminPricingManager } from './AdminPricingManager';
 import { DistributionHub } from './DistributionHub';
@@ -81,6 +84,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToPublic }) => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerRecord | null>(null);
   const [keyGeneratingCustomerId, setKeyGeneratingCustomerId] = useState<string | null>(null);
+  const [previewReceipt, setPreviewReceipt] = useState<{ url: string; title: string; filename: string } | null>(null);
 
   // New Customer Form State
   const [newCustomer, setNewCustomer] = useState({
@@ -1083,10 +1087,12 @@ Reply to this message anytime!
                   <table className="w-full text-left text-xs">
                     <thead className="bg-slate-100 border-b border-slate-200 text-slate-700 uppercase font-black tracking-wider text-[10px]">
                       <tr>
+                        <th className="py-3 px-4">Date</th>
                         <th className="py-3 px-4">Eatery & Customer</th>
                         <th className="py-3 px-4">Contact & Location</th>
                         <th className="py-3 px-4">Package & Tenure</th>
                         <th className="py-3 px-4">Amount Paid</th>
+                        <th className="py-3 px-4">Payment & Receipt</th>
                         <th className="py-3 px-4">License Code</th>
                         <th className="py-3 px-4">Status</th>
                         <th className="py-3 px-4 text-right">Actions</th>
@@ -1095,7 +1101,7 @@ Reply to this message anytime!
                     <tbody className="divide-y divide-slate-100 font-medium">
                       {filteredCustomers.length === 0 ? (
                         <tr>
-                          <td colSpan={7} className="py-12 text-center text-slate-500">
+                          <td colSpan={9} className="py-12 text-center text-slate-500">
                             <Users className="w-8 h-8 mx-auto text-slate-300 mb-2" />
                             <p className="font-bold text-slate-700">No customer records found</p>
                             <p className="text-xs text-slate-500 mt-1">
@@ -1111,6 +1117,30 @@ Reply to this message anytime!
 
                           return (
                             <tr key={cust.id} className="hover:bg-slate-50/80 transition-colors">
+                              {/* Date Column */}
+                              <td className="py-3 px-4 whitespace-nowrap">
+                                <div className="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                                  <Calendar className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                                  <span>
+                                    {cust.createdAt
+                                      ? new Date(cust.createdAt).toLocaleDateString('en-GB', {
+                                          day: '2-digit',
+                                          month: 'short',
+                                          year: 'numeric',
+                                        })
+                                      : 'N/A'}
+                                  </span>
+                                </div>
+                                <div className="text-[10px] text-slate-500 font-mono mt-0.5 pl-5">
+                                  {cust.createdAt
+                                    ? new Date(cust.createdAt).toLocaleTimeString([], {
+                                        hour: '2-digit',
+                                        minute: '2-digit',
+                                      })
+                                    : ''}
+                                </div>
+                              </td>
+
                               {/* Eatery & Customer */}
                               <td className="py-3 px-4">
                                 <div className="font-black text-slate-900 text-sm">
@@ -1159,6 +1189,54 @@ Reply to this message anytime!
                                 <div className="text-[10px] text-slate-500 capitalize">
                                   {cust.paymentMethod?.replace('_', ' ')}
                                 </div>
+                              </td>
+
+                              {/* Payment & Receipt */}
+                              <td className="py-3 px-4">
+                                {cust.paymentDetails ? (
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-1 text-[11px] font-bold text-slate-800">
+                                      <CreditCard className="w-3 h-3 text-emerald-600 shrink-0" />
+                                      <span className="truncate max-w-[140px]" title={cust.paymentDetails.receivingBank || 'Zenith Bank'}>
+                                        {cust.paymentDetails.receivingBank
+                                          ? cust.paymentDetails.receivingBank.split('(')[0].trim()
+                                          : 'Bank Transfer'}
+                                      </span>
+                                    </div>
+                                    {cust.paymentDetails.receiptFileName ? (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          if (cust.paymentDetails?.receiptFileData) {
+                                            setPreviewReceipt({
+                                              url: cust.paymentDetails.receiptFileData,
+                                              title: `Payment Receipt: ${cust.businessName}`,
+                                              filename: cust.paymentDetails.receiptFileName || 'receipt',
+                                            });
+                                          } else {
+                                            setSelectedCustomer(cust);
+                                          }
+                                        }}
+                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-[10px] transition-colors"
+                                        title="Click to view attached receipt"
+                                      >
+                                        <Paperclip className="w-2.5 h-2.5 text-emerald-700" />
+                                        <span className="truncate max-w-[95px]">{cust.paymentDetails.receiptFileName}</span>
+                                      </button>
+                                    ) : (
+                                      <div className="text-[10px] text-slate-500 font-mono">
+                                        Ref: {cust.paymentDetails.transactionRef || 'N/A'}
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="space-y-0.5">
+                                    <span className="text-[11px] text-slate-700 font-semibold capitalize">
+                                      {cust.paymentMethod === 'free_trial' ? 'Free Evaluation' : (cust.paymentMethod?.replace('_', ' ') || 'Direct Transfer')}
+                                    </span>
+                                    <span className="block text-[10px] text-slate-400">Standard Channel</span>
+                                  </div>
+                                )}
                               </td>
 
                               {/* License Code */}
@@ -1213,7 +1291,7 @@ Reply to this message anytime!
                                   <button
                                     onClick={() => setSelectedCustomer(cust)}
                                     className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700"
-                                    title="View Full Details"
+                                    title="View Full Details & Payment Receipt"
                                   >
                                     <Eye className="w-3.5 h-3.5" />
                                   </button>
@@ -1873,21 +1951,123 @@ Reply to this message anytime!
 
                 <div className="grid grid-cols-2 gap-3 text-xs">
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <span className="text-slate-500 text-[10px] uppercase font-bold block">Date Submitted</span>
+                    <span className="font-bold text-slate-900 flex items-center gap-1.5 mt-0.5">
+                      <Calendar className="w-3.5 h-3.5 text-amber-700" />
+                      {selectedCustomer.createdAt
+                        ? new Date(selectedCustomer.createdAt).toLocaleString('en-GB', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : 'N/A'}
+                    </span>
+                  </div>
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
                     <span className="text-slate-500 text-[10px] uppercase font-bold block">Contact Person</span>
-                    <span className="font-bold text-slate-900">{selectedCustomer.customerName}</span>
+                    <span className="font-bold text-slate-900 block mt-0.5">{selectedCustomer.customerName}</span>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
                     <span className="text-slate-500 text-[10px] uppercase font-bold block">Phone / WhatsApp</span>
-                    <span className="font-mono font-bold text-emerald-800">{selectedCustomer.phone}</span>
+                    <span className="font-mono font-bold text-emerald-800 block mt-0.5">{selectedCustomer.phone}</span>
+                  </div>
+                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                    <span className="text-slate-500 text-[10px] uppercase font-bold block">Location</span>
+                    <span className="font-bold text-slate-900 truncate block mt-0.5">{selectedCustomer.cityState || 'Nigeria'}</span>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
                     <span className="text-slate-500 text-[10px] uppercase font-bold block">Package & Tenure</span>
-                    <span className="font-bold text-amber-800">{selectedCustomer.packageSubscribed} ({selectedCustomer.tenureLabel})</span>
+                    <span className="font-bold text-amber-800 block mt-0.5">{selectedCustomer.packageSubscribed} ({selectedCustomer.tenureLabel})</span>
                   </div>
                   <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
                     <span className="text-slate-500 text-[10px] uppercase font-bold block">Amount Recorded</span>
-                    <span className="font-mono font-black text-slate-900 text-sm">₦{selectedCustomer.amountPaid.toLocaleString()}</span>
+                    <span className="font-mono font-black text-slate-900 text-sm block mt-0.5">₦{selectedCustomer.amountPaid.toLocaleString()}</span>
                   </div>
+
+                  {/* Attached Payment Details & Proof Card */}
+                  {selectedCustomer.paymentDetails && (
+                    <div className="col-span-2 p-3.5 bg-emerald-50/70 rounded-xl border border-emerald-200/90 space-y-2">
+                      <div className="flex items-center justify-between border-b border-emerald-200 pb-1.5">
+                        <span className="text-emerald-900 text-[11px] uppercase font-black flex items-center gap-1.5">
+                          <CreditCard className="w-3.5 h-3.5 text-emerald-700" />
+                          Attached Payment Details & Settlement Proof
+                        </span>
+                        <span className="text-[10px] bg-emerald-200 text-emerald-950 font-black px-2 py-0.5 rounded-full">
+                          Verified Settlement Desk
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-[11px]">
+                        <div>
+                          <span className="text-emerald-800/80 font-bold block text-[10px]">Payer / Account Name:</span>
+                          <span className="font-black text-slate-900">{selectedCustomer.paymentDetails.payerName || selectedCustomer.customerName}</span>
+                        </div>
+                        <div>
+                          <span className="text-emerald-800/80 font-bold block text-[10px]">Bank Transferred From:</span>
+                          <span className="font-black text-slate-900">{selectedCustomer.paymentDetails.senderBank || 'Direct Transfer'}</span>
+                        </div>
+                        <div>
+                          <span className="text-emerald-800/80 font-bold block text-[10px]">Destination Account:</span>
+                          <span className="font-black text-emerald-900">{selectedCustomer.paymentDetails.receivingBank || 'Zenith Bank Plc (1016978239)'}</span>
+                        </div>
+                        <div>
+                          <span className="text-emerald-800/80 font-bold block text-[10px]">Transaction Ref / Session ID:</span>
+                          <span className="font-mono font-black text-slate-900">{selectedCustomer.paymentDetails.transactionRef || 'N/A'}</span>
+                        </div>
+                        {selectedCustomer.paymentDetails.paymentDate && (
+                          <div>
+                            <span className="text-emerald-800/80 font-bold block text-[10px]">Payment Date:</span>
+                            <span className="font-medium text-slate-800">{selectedCustomer.paymentDetails.paymentDate}</span>
+                          </div>
+                        )}
+                        {selectedCustomer.paymentDetails.amountTransferred !== undefined && (
+                          <div>
+                            <span className="text-emerald-800/80 font-bold block text-[10px]">Amount Sent:</span>
+                            <span className="font-mono font-black text-emerald-800">₦{Number(selectedCustomer.paymentDetails.amountTransferred).toLocaleString()}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Attached Receipt File Box */}
+                      {selectedCustomer.paymentDetails.receiptFileName && (
+                        <div className="pt-2 border-t border-emerald-200/80 flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-lg bg-white border border-emerald-300 flex items-center justify-center text-emerald-700 shrink-0">
+                              <Paperclip className="w-4 h-4" />
+                            </div>
+                            <div>
+                              <span className="font-bold text-slate-900 text-xs block truncate max-w-[200px]">
+                                {selectedCustomer.paymentDetails.receiptFileName}
+                              </span>
+                              <span className="text-[10px] text-slate-500">
+                                {selectedCustomer.paymentDetails.receiptFileSize || 'Attached Document'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {selectedCustomer.paymentDetails.receiptFileData && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setPreviewReceipt({
+                                  url: selectedCustomer.paymentDetails!.receiptFileData!,
+                                  title: `Receipt: ${selectedCustomer.businessName}`,
+                                  filename: selectedCustomer.paymentDetails!.receiptFileName || 'receipt',
+                                });
+                              }}
+                              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1 shadow-2xs"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>View Receipt</span>
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div className="col-span-2 p-3 bg-slate-50 rounded-xl border border-slate-200">
                     <span className="text-slate-500 text-[10px] uppercase font-bold block mb-1">Assigned License Key</span>
                     <div className="flex items-center justify-between gap-2">
@@ -1922,6 +2102,73 @@ Reply to this message anytime!
                   <button
                     onClick={() => setSelectedCustomer(null)}
                     className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ==========================================
+              MODAL: PREVIEW ATTACHED RECEIPT / PROOF
+          ========================================== */}
+          {previewReceipt && (
+            <div className="fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xs flex items-center justify-center p-4">
+              <div className="bg-white border border-slate-300 rounded-3xl max-w-2xl w-full p-5 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 max-h-[90vh] flex flex-col">
+                <div className="flex items-center justify-between pb-3 border-b border-slate-200">
+                  <div className="flex items-center gap-2">
+                    <Paperclip className="w-5 h-5 text-emerald-700" />
+                    <div>
+                      <h3 className="text-sm font-black text-slate-900">{previewReceipt.title}</h3>
+                      <span className="text-[10px] text-slate-500 font-mono">{previewReceipt.filename}</span>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setPreviewReceipt(null)}
+                    className="p-1.5 rounded-xl hover:bg-slate-100 text-slate-500"
+                  >
+                    <XCircle className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="flex-1 overflow-auto bg-slate-100 rounded-2xl p-2 flex items-center justify-center min-h-[300px] max-h-[60vh] border border-slate-200">
+                  {previewReceipt.url.startsWith('data:image') || previewReceipt.filename.match(/\.(png|jpe?g|webp|gif)$/i) ? (
+                    <img
+                      src={previewReceipt.url}
+                      alt={previewReceipt.title}
+                      className="max-h-full max-w-full object-contain rounded-lg shadow-xs"
+                    />
+                  ) : (
+                    <div className="text-center p-8 space-y-3">
+                      <FileText className="w-16 h-16 text-emerald-600 mx-auto" />
+                      <p className="font-bold text-slate-800 text-sm">PDF Payment Receipt Document</p>
+                      <span className="text-xs text-slate-500 block">{previewReceipt.filename}</span>
+                      <a
+                        href={previewReceipt.url}
+                        download={previewReceipt.filename}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-xs"
+                      >
+                        <Download className="w-4 h-4" />
+                        <span>Download & View Document</span>
+                      </a>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-slate-200">
+                  <a
+                    href={previewReceipt.url}
+                    download={previewReceipt.filename}
+                    className="px-4 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 font-bold text-xs flex items-center gap-1.5"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download Receipt</span>
+                  </a>
+
+                  <button
+                    onClick={() => setPreviewReceipt(null)}
+                    className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs"
                   >
                     Close
                   </button>

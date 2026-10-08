@@ -347,12 +347,6 @@ export const DistributionHub: React.FC = () => {
                     <span className="font-bold text-[11px] text-slate-500">Format:</span>
                     <span className="font-bold text-slate-800">{file.type}</span>
                   </div>
-                  <div className="flex items-center justify-between text-slate-700">
-                    <span className="font-bold text-[11px] text-slate-500">SHA-256:</span>
-                    <span className="text-[10px] text-slate-600 truncate max-w-[190px]" title={file.sha256}>
-                      {file.sha256}
-                    </span>
-                  </div>
                 </div>
 
                 {/* Live Download URL Box */}
@@ -456,34 +450,6 @@ export const DistributionHub: React.FC = () => {
             </div>
           );
         })}
-      </div>
-
-      {/* Distribution Hub Guidance & Architecture Note */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-5 sm:p-6 shadow-2xs space-y-3">
-        <div className="flex items-center gap-2 text-slate-900 font-black text-sm">
-          <Terminal className="w-4 h-4 text-amber-600" />
-          <span>Distribution Hub Architecture & Auto-Attach Mechanics</span>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-600">
-          <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-1">
-            <span className="font-black text-slate-900 block">1. Live File Storage</span>
-            <p>
-              Files are stored on the server's root distribution directory (<code className="font-mono text-slate-800">/downloads/</code>) and statically served with exact binary headers.
-            </p>
-          </div>
-          <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-1">
-            <span className="font-black text-slate-900 block">2. Automatic Re-Attachment</span>
-            <p>
-              Uploading an updated <code className="font-mono text-slate-800">.msi</code> or <code className="font-mono text-slate-800">.zip</code> automatically overrides the live link with zero downtime.
-            </p>
-          </div>
-          <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl space-y-1">
-            <span className="font-black text-slate-900 block">3. Instant Validation</span>
-            <p>
-              The Test Download validator verifies HTTP 200 availability, Content-Length, and computes cryptographic hash integrity.
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );

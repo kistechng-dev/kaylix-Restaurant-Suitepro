@@ -54,7 +54,7 @@ export const PhoneSimulatorWrapper: React.FC<PhoneSimulatorWrapperProps> = ({
             }`}
           >
             <Smartphone className="w-3.5 h-3.5" />
-            <span>Phone (430px)</span>
+            <span>Phone View</span>
           </button>
           <button
             type="button"
@@ -66,7 +66,7 @@ export const PhoneSimulatorWrapper: React.FC<PhoneSimulatorWrapperProps> = ({
             }`}
           >
             <Tablet className="w-3.5 h-3.5" />
-            <span>POS Tablet (768px)</span>
+            <span>Tablet View</span>
           </button>
         </div>
 
@@ -83,8 +83,8 @@ export const PhoneSimulatorWrapper: React.FC<PhoneSimulatorWrapperProps> = ({
       <div
         className={`relative w-full transition-all duration-300 ease-out shadow-[0_25px_70px_rgba(0,0,0,0.75)] ring-1 ring-white/10 overflow-hidden flex flex-col ${
           isPhone
-            ? 'max-w-[430px] rounded-[50px] border-[10px] border-slate-900 bg-slate-950 h-[880px]'
-            : 'max-w-[768px] rounded-[36px] border-[12px] border-slate-900 bg-slate-950 h-[860px]'
+            ? 'max-w-[460px] rounded-[44px] border-[6px] border-slate-800 bg-slate-950 h-[880px]'
+            : 'max-w-[800px] rounded-[36px] border-[8px] border-slate-800 bg-slate-950 h-[860px]'
         }`}
       >
         {/* Dynamic Island & Mobile Status Bar */}

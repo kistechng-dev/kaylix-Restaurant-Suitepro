@@ -62,6 +62,19 @@ export interface HardwareAddon {
   isFeatured?: boolean;
 }
 
+export interface AttachedPaymentDetails {
+  payerName?: string;
+  senderBank?: string;
+  receivingBank?: string;
+  transactionRef?: string;
+  paymentDate?: string;
+  amountTransferred?: number;
+  receiptFileName?: string;
+  receiptFileType?: string;
+  receiptFileSize?: string;
+  receiptFileData?: string;
+}
+
 export interface OrderFormData {
   customerName: string;
   businessName: string;
@@ -74,6 +87,7 @@ export interface OrderFormData {
   deploymentType: 'remote' | 'self' | 'onsite';
   paymentMethod: 'bank_transfer' | 'card' | 'cash';
   notes: string;
+  paymentDetails?: AttachedPaymentDetails;
 }
 
 export interface LicenseParams {
@@ -143,6 +157,7 @@ export interface CustomerRecord {
   deploymentType?: string;
   paymentMethod?: string;
   notes?: string;
+  paymentDetails?: AttachedPaymentDetails;
   createdAt: string;
   updatedAt: string;
 }

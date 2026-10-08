@@ -1,5 +1,5 @@
 import React from 'react';
-import { UtensilsCrossed, Download, MessageSquare, PhoneCall, Smartphone, Monitor, Package, Building2, Flame } from 'lucide-react';
+import { UtensilsCrossed, Download, MessageSquare, PhoneCall, Smartphone, Monitor, Package, Building2, Home } from 'lucide-react';
 import { VENDOR_CONTACT } from '../data/mockData';
 
 export type PageType = 'tour' | 'plan' | 'download' | 'banks' | 'order';
@@ -90,8 +90,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                   : 'text-slate-700 hover:text-slate-950 hover:bg-slate-100'
               }`}
             >
-              <Flame className="w-3.5 h-3.5 text-amber-600" />
-              <span>POS Tour</span>
+              <Home className="w-3.5 h-3.5 text-amber-600" />
+              <span>Home</span>
             </button>
 
             <button

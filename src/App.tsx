@@ -146,7 +146,7 @@ export default function App() {
                     onClick={() => navigateToPage('tour')}
                     className="hover:underline flex items-center gap-1 text-slate-600 hover:text-slate-900"
                   >
-                    <span>Home / Tour</span>
+                    <span>Home</span>
                   </button>
                   <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                   <span className="text-amber-900 font-extrabold">Choose Your Plan Package</span>
@@ -248,7 +248,7 @@ export default function App() {
                     onClick={() => navigateToPage('tour')}
                     className="hover:underline flex items-center gap-1 text-slate-600 hover:text-slate-900"
                   >
-                    <span>Home / Tour</span>
+                    <span>Home</span>
                   </button>
                   <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                   <span className="text-emerald-900 font-extrabold">Direct Bank Transfer & Payment Details</span>
@@ -318,7 +318,7 @@ export default function App() {
                     onClick={() => navigateToPage('tour')}
                     className="hover:underline flex items-center gap-1 hover:text-slate-900"
                   >
-                    <span>Home / Tour</span>
+                    <span>Home</span>
                   </button>
                   <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
                   <button
@@ -374,7 +374,7 @@ export default function App() {
       default:
         return (
           <div className="animate-fadeIn">
-            {/* Hero & Interactive Software Tour */}
+            {/* Hero & Official Download Showcase */}
             <Hero
               onDownloadTrial={handleQuickDownloadTrial}
               onNavigateToPage={navigateToPage}

@@ -207,6 +207,7 @@ export function createCustomerRecord(data: Partial<CustomerRecord>): CustomerRec
     deploymentType: data.deploymentType || 'remote',
     paymentMethod: data.paymentMethod || 'bank_transfer',
     notes: data.notes || '',
+    paymentDetails: data.paymentDetails || undefined,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
