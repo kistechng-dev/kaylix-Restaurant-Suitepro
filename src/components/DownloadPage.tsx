@@ -57,7 +57,7 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
   const [regForm, setRegForm] = useState({
     customerName: '',
     businessName: '',
-    phone: '08060395329',
+    phone: '',
     email: '',
     cityState: 'Victoria Island, Eti-Osa LGA, Lagos, Nigeria',
     hardwareInUse: 'Windows PC / Laptop + 80mm Thermal Printer',

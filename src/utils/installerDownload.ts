@@ -323,7 +323,7 @@ export async function generateTrialEvaluationPackage(options?: TrialPackageOptio
   const zip = new JSZip();
   const business = options?.businessName?.trim() || "Valued Restaurant & Lounge";
   const contact = options?.customerName?.trim() || "General Manager";
-  const phone = options?.phone?.trim() || "08089697390";
+  const phone = options?.phone?.trim() || "N/A";
   const licenseKey = options?.licenseCode || "TRAL-7D9A1-2C4B8-7D-8F22";
   const dateStr = new Date().toISOString().split('T')[0];
   const expireDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];

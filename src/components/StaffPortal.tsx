@@ -265,12 +265,12 @@ export const StaffPortal: React.FC<StaffPortalProps> = ({ onBackToPublic, onOpen
   const handleRequestOtp = async (channel: 'whatsapp' | 'sms' = 'whatsapp') => {
     const rawPhone = ownerPhoneInput.trim();
     if (!rawPhone) {
-      setAuthError("Please enter the owner's recovery phone number as identifier.");
+      setAuthError("Please enter your registered authenticator phone number.");
       return;
     }
 
     if (!isAuthorizedPhone(rawPhone)) {
-      setAuthError('Unrecognized phone number. Please enter an authorized owner / recovery identifier (e.g. 08089697390).');
+      setAuthError('Unrecognized phone number. Please enter an authorized identifier.');
       return;
     }
 
@@ -792,7 +792,7 @@ Reply to this message anytime!
               </div>
 
               <p className="text-[11px] text-slate-500 mb-2.5 leading-relaxed font-medium">
-                Enter the registered owner/staff authenticator phone number (e.g. <span className="font-mono font-bold text-slate-700">08089697390</span>) to request your 6-digit access code:
+                Enter your registered authenticator phone number to request your 6-digit access code:
               </p>
 
               <div className="flex items-center gap-2 mb-3">
@@ -802,7 +802,7 @@ Reply to this message anytime!
                   </div>
                   <input
                     type="tel"
-                    placeholder="Enter phone number (e.g. 08089697390)"
+                    placeholder="Enter registered authenticator phone number"
                     value={ownerPhoneInput}
                     onChange={(e) => {
                       setOwnerPhoneInput(e.target.value);
@@ -1874,7 +1874,7 @@ Reply to this message anytime!
                     <input
                       type="tel"
                       required
-                      placeholder="e.g. 08089697390"
+                      placeholder="Enter customer phone number"
                       value={newOrder.phone}
                       onChange={(e) => setNewOrder({ ...newOrder, phone: e.target.value })}
                       className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-medium text-slate-900 focus:outline-none focus:border-emerald-600"

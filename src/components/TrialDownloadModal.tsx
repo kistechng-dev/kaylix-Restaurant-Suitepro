@@ -50,7 +50,7 @@ export const TrialDownloadModal: React.FC<TrialDownloadModalProps> = ({
   // Form State
   const [businessName, setBusinessName] = useState(initialBusinessName || "Mama's Delight Kitchen & Lounge");
   const [customerName, setCustomerName] = useState(initialCustomerName || 'Chef / Manager');
-  const [phone, setPhone] = useState(initialPhone || '08089697390');
+  const [phone, setPhone] = useState(initialPhone || '');
   const [email, setEmail] = useState('');
   const [cityState, setCityState] = useState('Victoria Island, Lagos, Nigeria');
   const [hardwareInUse, setHardwareInUse] = useState('Windows PC / Laptop + 80mm Thermal Printer');
@@ -69,7 +69,7 @@ export const TrialDownloadModal: React.FC<TrialDownloadModalProps> = ({
   const handleFillDemo = () => {
     setBusinessName("Buka Royale Kitchen & Grills");
     setCustomerName('Emmanuel Okon');
-    setPhone('08089697390');
+    setPhone('08023456789');
     setEmail('emmanuel.buka@gmail.com');
     setCityState('Ikeja, Lagos, Nigeria');
     setHardwareInUse('Touchscreen POS Terminal + 80mm Kitchen Printer');
@@ -93,7 +93,7 @@ export const TrialDownloadModal: React.FC<TrialDownloadModalProps> = ({
       const trialKeyResult = generateMasterLicenseKey({
         businessName: businessName.trim() || "Mama's Delight Kitchen & Lounge",
         edition: 'trial',
-        clientPhone: phone.trim() || '08089697390',
+        clientPhone: phone.trim() || '08000000000',
         validityDays: 7,
         terminalLimit: 1,
         hwid: 'CLIENT-HWID-TRIAL',
@@ -122,7 +122,7 @@ export const TrialDownloadModal: React.FC<TrialDownloadModalProps> = ({
           body: JSON.stringify({
             customerName: customerName.trim() || 'Valued Trial Client',
             businessName: businessName.trim() || 'Eatery & Lounge',
-            phone: phone.trim() || '08089697390',
+            phone: phone.trim() || 'N/A',
             email: email.trim() || 'trial@kaylix.internal',
             cityState: cityState.trim() || 'Lagos, Nigeria',
             packageSubscribed: 'Trial Plan (7-Day Free Evaluation)',
@@ -341,7 +341,7 @@ export const TrialDownloadModal: React.FC<TrialDownloadModalProps> = ({
                       required
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      placeholder="08089697390 or 08060395329"
+                      placeholder="Enter WhatsApp / mobile phone number"
                       className="w-full pl-8 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl font-medium text-slate-900 focus:bg-white focus:outline-none focus:border-blue-600"
                     />
                   </div>
