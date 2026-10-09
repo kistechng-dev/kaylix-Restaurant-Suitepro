@@ -7,9 +7,10 @@ interface FooterProps {
   onNavigateToPage?: (page: PageType) => void;
   onScrollToSection?: (sectionId: string) => void;
   onOpenAdmin?: () => void;
+  onOpenStaff?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ onNavigateToPage, onScrollToSection }) => {
+export const Footer: React.FC<FooterProps> = ({ onNavigateToPage, onScrollToSection, onOpenAdmin, onOpenStaff }) => {
   const handleNav = (target: PageType | string) => {
     if (onNavigateToPage) {
       if (target === 'whatsapp-order' || target === 'order') onNavigateToPage('order');
@@ -153,6 +154,24 @@ export const Footer: React.FC<FooterProps> = ({ onNavigateToPage, onScrollToSect
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
               100% Genuine Software
             </span>
+            <span className="text-slate-300">•</span>
+            {onOpenStaff && (
+              <button
+                onClick={onOpenStaff}
+                className="hover:text-amber-700 transition-colors font-medium text-slate-500 hover:underline"
+              >
+                Staff Portal
+              </button>
+            )}
+            <span className="text-slate-300">•</span>
+            {onOpenAdmin && (
+              <button
+                onClick={onOpenAdmin}
+                className="hover:text-amber-700 transition-colors font-medium text-slate-500 hover:underline"
+              >
+                Admin Gateway
+              </button>
+            )}
           </div>
         </div>
       </div>

@@ -10,7 +10,8 @@ import {
   validateServerMasterKey,
   generateAdminOtp,
   verifyAdminOtpOrPin,
-  ADMIN_RECOVERY_PHONE_DISPLAY,
+  isAuthorizedRecoveryPhone,
+  AUTHORIZED_RECOVERY_PHONES,
 } from './server/licenseService.ts';
 import {
   getAllCustomers,
@@ -30,6 +31,11 @@ import {
   generateWhatsAppOtp,
   verifyWhatsAppOtp,
 } from './server/pricingDatabase.ts';
+import {
+  getAllStaffActivities,
+  recordStaffActivity,
+  exportStaffActivitiesCsv,
+} from './server/staffActivity.ts';
 
 dotenv.config();
 
@@ -192,17 +198,30 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// POST /api/admin/request-otp - Generate 6-digit random code sent to 234 806 0395 329
-app.post('/api/admin/request-otp', (req, res) => {
+// POST /api/admin/request-otp & /api/staff/request-otp
+app.post(['/api/admin/request-otp', '/api/staff/request-otp'], (req, res) => {
   try {
-    const otpData = generateAdminOtp();
+    const { phone } = req.body || {};
+    if (!phone || typeof phone !== 'string' || !phone.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: "Please enter the owner's recovery phone number as identifier.",
+      });
+    }
+
+    if (!isAuthorizedRecoveryPhone(phone)) {
+      return res.status(403).json({
+        success: false,
+        error: 'Unrecognized phone number. Please enter an authorized owner / recovery identifier.',
+      });
+    }
+
+    const otpData = generateAdminOtp(phone);
     res.json({
       success: true,
-      message: `Security unlock code generated for registered phone ${otpData.phone}`,
-      phone: otpData.phone,
+      message: 'Security verification code generated and transmitted.',
       whatsappUrl: otpData.whatsappUrl,
       smsUrl: otpData.smsUrl,
-      code: otpData.code,
       expiresInSeconds: 600,
     });
   } catch (error: any) {
@@ -211,8 +230,8 @@ app.post('/api/admin/request-otp', (req, res) => {
   }
 });
 
-// POST /api/admin/verify-pin - Verify Master PIN or random OTP
-app.post('/api/admin/verify-pin', (req, res) => {
+// POST /api/admin/verify-pin & /api/staff/verify-pin
+app.post(['/api/admin/verify-pin', '/api/staff/verify-pin'], (req, res) => {
   try {
     const { pin } = req.body;
     if (!pin) {
@@ -220,7 +239,7 @@ app.post('/api/admin/verify-pin', (req, res) => {
     }
 
     if (verifyAdminOtpOrPin(pin)) {
-      res.json({ success: true, message: 'Admin verified successfully' });
+      res.json({ success: true, message: 'Identity verified successfully' });
     } else {
       res.status(401).json({
         success: false,
@@ -365,6 +384,19 @@ app.post(['/api/orders', '/api/customers'], (req, res) => {
     }
 
     const savedRecord = createCustomerRecord(orderData);
+
+    // Record staff/visitor activity
+    recordStaffActivity({
+      staffIdentifier: orderData.staffIdentifier || 'Staff Desk (08089697390)',
+      actionType: 'ORDER_REGISTERED',
+      targetCustomer: savedRecord.customerName,
+      targetBusiness: savedRecord.businessName,
+      planPackage: savedRecord.packageSubscribed,
+      amount: savedRecord.amountPaid,
+      licenseCode: savedRecord.licenseCode,
+      changesMade: `Recorded order for ${savedRecord.businessName} (${savedRecord.packageSubscribed}) - ₦${savedRecord.amountPaid.toLocaleString()}`,
+    });
+
     res.json({
       success: true,
       message: 'Order and customer details recorded in database successfully.',
@@ -388,6 +420,21 @@ app.patch('/api/customers/:id', (req, res) => {
     if (!updated) {
       return res.status(404).json({ success: false, error: 'Customer record not found' });
     }
+
+    // Record staff activity
+    recordStaffActivity({
+      staffIdentifier: updates.staffIdentifier || 'Staff Desk (08089697390)',
+      actionType: updates.status ? 'STATUS_CHANGED' : 'CUSTOMER_UPDATED',
+      targetCustomer: updated.customerName,
+      targetBusiness: updated.businessName,
+      planPackage: updated.packageSubscribed,
+      amount: updated.amountPaid,
+      licenseCode: updated.licenseCode,
+      changesMade: `Updated record for ${updated.businessName}. ${
+        updates.status ? `Status changed to "${updated.status}".` : 'Customer profile updated.'
+      }`,
+    });
+
     res.json({
       success: true,
       customer: updated,
@@ -430,6 +477,19 @@ app.post('/api/customers/:id/generate-license', (req, res) => {
     if (!result) {
       return res.status(404).json({ success: false, error: 'Customer not found' });
     }
+
+    // Record staff license issuance
+    recordStaffActivity({
+      staffIdentifier: req.body.staffIdentifier || 'Staff Desk (08089697390)',
+      actionType: 'LICENSE_SOLD',
+      targetCustomer: result.customer.customerName,
+      targetBusiness: result.customer.businessName,
+      planPackage: result.customer.packageSubscribed,
+      amount: result.customer.amountPaid,
+      licenseCode: result.customer.licenseCode,
+      changesMade: `Issued & activated license (${result.customer.licenseCode}) for ${result.customer.businessName}. Status: Active.`,
+    });
+
     res.json({
       success: true,
       message: 'License key generated and bound to customer.',
@@ -442,6 +502,84 @@ app.post('/api/customers/:id/generate-license', (req, res) => {
       success: false,
       error: 'Failed to generate license: ' + (error?.message || 'Internal error'),
     });
+  }
+});
+
+// ==========================================
+// STAFF ACTIVITY AUDIT & USAGE RECORD API
+// ==========================================
+
+// GET /api/admin/staff-activities - Get staff portal usage records
+app.get('/api/admin/staff-activities', (req, res) => {
+  try {
+    const activities = getAllStaffActivities();
+    res.json({
+      success: true,
+      count: activities.length,
+      activities,
+    });
+  } catch (error: any) {
+    console.error('Fetch staff activities error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch staff activities: ' + (error?.message || 'Internal error'),
+    });
+  }
+});
+
+// POST /api/staff/log-activity - Log staff usage activity from client
+app.post('/api/staff/log-activity', (req, res) => {
+  try {
+    const {
+      staffIdentifier = 'Staff Operator (08089697390)',
+      actionType,
+      targetCustomer,
+      targetBusiness,
+      planPackage,
+      amount,
+      licenseCode,
+      changesMade,
+    } = req.body;
+
+    if (!actionType || !changesMade) {
+      return res.status(400).json({ success: false, error: 'actionType and changesMade are required' });
+    }
+
+    const newActivity = recordStaffActivity({
+      staffIdentifier,
+      actionType,
+      targetCustomer,
+      targetBusiness,
+      planPackage,
+      amount,
+      licenseCode,
+      changesMade,
+    });
+
+    res.json({
+      success: true,
+      activity: newActivity,
+    });
+  } catch (error: any) {
+    console.error('Record staff activity error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to record staff activity: ' + (error?.message || 'Internal error'),
+    });
+  }
+});
+
+// GET /api/admin/staff-activities/export/csv - Download staff activity log CSV
+app.get('/api/admin/staff-activities/export/csv', (req, res) => {
+  try {
+    const csvData = exportStaffActivitiesCsv();
+    const filename = `KAYLIX_STAFF_ACTIVITY_LOG_${new Date().toISOString().split('T')[0]}.csv`;
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csvData);
+  } catch (error: any) {
+    console.error('Export staff activities CSV error:', error);
+    res.status(500).send('Failed to export staff activities CSV');
   }
 });
 

@@ -11,9 +11,11 @@ import { FeatureMatrix } from './components/FeatureMatrix';
 import { BankDetailsSection } from './components/BankDetailsSection';
 import { WhatsAppOrderSender } from './components/WhatsAppOrderSender';
 import { DownloadModal } from './components/DownloadModal';
+import { TrialDownloadModal } from './components/TrialDownloadModal';
 import { DownloadPage } from './components/DownloadPage';
 import { Footer } from './components/Footer';
 import { AdminPortal } from './components/AdminPortal';
+import { StaffPortal } from './components/StaffPortal';
 import { MobileBottomBar } from './components/MobileBottomBar';
 import { PhoneSimulatorWrapper } from './components/PhoneSimulatorWrapper';
 import { EditionDetail, EditionType, OrderEditionType, DurationTier } from './types';
@@ -24,6 +26,7 @@ import { syncPricingWithServer } from './utils/pricingStorage';
 export default function App() {
   const [currency, setCurrency] = useState<'NGN' | 'USD'>('NGN');
   const [downloadModalEdition, setDownloadModalEdition] = useState<EditionDetail | null>(null);
+  const [isTrialDownloadModalOpen, setIsTrialDownloadModalOpen] = useState(false);
   const [orderSelectedEdition, setOrderSelectedEdition] = useState<OrderEditionType>('standard');
   const [orderSelectedTier, setOrderSelectedTier] = useState<DurationTier>('1_year');
   const [orderSelectedAddons, setOrderSelectedAddons] = useState<string[]>([]);
@@ -49,6 +52,14 @@ export default function App() {
     return false;
   });
 
+  // Staff Portal mode state (dedicated staff operational gateway)
+  const [isStaffView, setIsStaffView] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.location.hash === '#staff' || window.location.pathname === '/staff';
+    }
+    return false;
+  });
+
   // Hash synchronization and initial pricing sync
   useEffect(() => {
     syncPricingWithServer();
@@ -56,9 +67,16 @@ export default function App() {
       const hash = window.location.hash.toLowerCase();
       if (hash === '#admin' || window.location.pathname === '/admin') {
         setIsAdminView(true);
+        setIsStaffView(false);
+        return;
+      }
+      if (hash === '#staff' || window.location.pathname === '/staff') {
+        setIsStaffView(true);
+        setIsAdminView(false);
         return;
       }
       setIsAdminView(false);
+      setIsStaffView(false);
 
       if (hash.includes('plan') || hash.includes('package') || hash.includes('editions')) {
         setCurrentPage('plan');
@@ -88,12 +106,18 @@ export default function App() {
   };
 
   const handleQuickDownloadTrial = () => {
-    handleSelectForOrder('trial', '7_days');
+    setOrderSelectedEdition('trial');
+    setOrderSelectedTier('7_days');
+    setIsTrialDownloadModalOpen(true);
   };
 
   const handleSelectForOrder = (editionId: OrderEditionType, tier: DurationTier = '1_year') => {
     setOrderSelectedEdition(editionId);
     setOrderSelectedTier(tier);
+    if (editionId === 'trial') {
+      setIsTrialDownloadModalOpen(true);
+      return;
+    }
     if (editionId === 'none') {
       setOrderSelectedAddons(['thermal-printer-80mm']);
     } else {
@@ -115,6 +139,7 @@ export default function App() {
 
   const handleOpenAdmin = () => {
     setIsAdminView(true);
+    setIsStaffView(false);
     window.location.hash = '#admin';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -127,9 +152,29 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const handleOpenStaff = () => {
+    setIsStaffView(true);
+    setIsAdminView(false);
+    window.location.hash = '#staff';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleCloseStaff = () => {
+    setIsStaffView(false);
+    if (window.location.hash === '#staff') {
+      window.history.pushState(null, '', window.location.pathname);
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // If in Admin mode, render the private Backend Admin Portal
   if (isAdminView) {
     return <AdminPortal onBackToPublic={handleCloseAdmin} />;
+  }
+
+  // If in Staff mode, render the dedicated Staff Operations Portal
+  if (isStaffView) {
+    return <StaffPortal onBackToPublic={handleCloseStaff} onOpenAdmin={handleOpenAdmin} />;
   }
 
   // Render individual page content
@@ -485,10 +530,11 @@ export default function App() {
         {renderCurrentPage()}
       </main>
 
-      {/* Footer with multi-page navigation and discrete Admin Portal link */}
+      {/* Footer with multi-page navigation and discrete Admin/Staff Portal links */}
       <Footer
         onNavigateToPage={navigateToPage}
         onOpenAdmin={handleOpenAdmin}
+        onOpenStaff={handleOpenStaff}
       />
 
       {/* Mobile Floating Thumb-Zone Navigation Bar */}
@@ -505,6 +551,12 @@ export default function App() {
         onProceedToOrder={(editionId) => {
           handleSelectForOrder(editionId || 'standard');
         }}
+      />
+
+      {/* 7-Day Free Evaluation Download & Backend Registration Modal */}
+      <TrialDownloadModal
+        isOpen={isTrialDownloadModalOpen}
+        onClose={() => setIsTrialDownloadModalOpen(false)}
       />
     </div>
   );

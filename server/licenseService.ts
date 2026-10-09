@@ -5,21 +5,43 @@ import { EditionType, DurationTier, LicenseParams, GeneratedLicense, LicenseVali
 const SERVER_SIGNING_SALT = process.env.MASTER_KEY_SECRET || 'KYLX_HMAC_CHEF_MASTER_SALT_2026_NGR';
 const MASTER_RESELLER_PIN = process.env.RESELLER_ADMIN_PIN || '8492';
 
-export const ADMIN_RECOVERY_PHONE = '2348060395329';
-export const ADMIN_RECOVERY_PHONE_DISPLAY = '234 806 0395 329';
+// Authorized recovery phone numbers (Owner / Master Authenticators)
+export const AUTHORIZED_RECOVERY_PHONES = [
+  '2348089697390',
+  '08089697390',
+  '2348060395329',
+  '08060395329',
+];
+
+export function normalizePhoneNumber(phone: string): string {
+  let cleaned = (phone || '').replace(/[^0-9]/g, '');
+  if (cleaned.startsWith('234') && cleaned.length === 13) {
+    return cleaned;
+  }
+  if (cleaned.startsWith('0') && cleaned.length === 11) {
+    return '234' + cleaned.slice(1);
+  }
+  return cleaned;
+}
+
+export function isAuthorizedRecoveryPhone(inputPhone: string): boolean {
+  if (!inputPhone) return false;
+  const normalized = normalizePhoneNumber(inputPhone);
+  return normalized === '2348089697390' || normalized === '2348060395329';
+}
 
 interface ActiveOtpRecord {
   code: string;
   createdAt: number;
   expiresAt: number;
+  phoneTarget?: string;
 }
 
 let currentOtpRecord: ActiveOtpRecord | null = null;
 
-export function generateAdminOtp(): {
+export function generateAdminOtp(phoneInput?: string): {
   code: string;
   expiresAt: number;
-  phone: string;
   whatsappUrl: string;
   smsUrl: string;
 } {
@@ -27,20 +49,26 @@ export function generateAdminOtp(): {
   const now = Date.now();
   const expiresAt = now + 10 * 60 * 1000;
 
+  // Determine target authorized phone
+  let targetRaw = '2348089697390';
+  if (phoneInput && isAuthorizedRecoveryPhone(phoneInput)) {
+    targetRaw = normalizePhoneNumber(phoneInput);
+  }
+
   currentOtpRecord = {
     code,
     createdAt: now,
     expiresAt,
+    phoneTarget: targetRaw,
   };
 
-  const message = `*KAYLIX ADMIN PORTAL SECURITY OTP*\n\nYour one-time restricted admin unlock code is: *${code}*\n\nUse this code to unlock the restricted Admin Portal. This code expires in 10 minutes.\nDo not share this code with anyone.`;
-  const whatsappUrl = `https://wa.me/${ADMIN_RECOVERY_PHONE}?text=${encodeURIComponent(message)}`;
-  const smsUrl = `sms:+${ADMIN_RECOVERY_PHONE}?body=${encodeURIComponent(`Kaylix Admin Security Code: ${code} (Expires in 10 mins)`)}`;
+  const message = `*KAYLIX SECURITY VERIFICATION OTP*\n\nYour one-time portal unlock code is: *${code}*\n\nExpires in 10 minutes.\nDo not share this code with anyone.`;
+  const whatsappUrl = `https://wa.me/${targetRaw}?text=${encodeURIComponent(message)}`;
+  const smsUrl = `sms:+${targetRaw}?body=${encodeURIComponent(`Kaylix Security Code: ${code} (Expires in 10 mins)`)}`;
 
   return {
     code,
     expiresAt,
-    phone: ADMIN_RECOVERY_PHONE_DISPLAY,
     whatsappUrl,
     smsUrl,
   };

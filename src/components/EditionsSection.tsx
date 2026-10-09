@@ -229,25 +229,47 @@ export const EditionsSection: React.FC<EditionsSectionProps> = ({
 
         {/* Bottom Actions */}
         <div className="mt-4 pt-3 border-t border-slate-200 space-y-2">
-          {/* Order via WhatsApp */}
-          <button
-            onClick={() => onSelectForOrder(edition.id, currentTier)}
-            className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all active:scale-95"
-          >
-            <MessageSquare className="w-4 h-4 text-white" />
-            <span>Order {edition.name} on WhatsApp</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+          {/* Order / Download Button */}
+          {isTrial ? (
+            <button
+              onClick={() => onSelectForOrder('trial', '7_days')}
+              className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md shadow-blue-600/25 transition-all active:scale-95"
+            >
+              <Download className="w-4 h-4 text-amber-300 stroke-[2.8]" />
+              <span>Download 7-Day Free Evaluation Pass</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          ) : (
+            <button
+              onClick={() => onSelectForOrder(edition.id, currentTier)}
+              className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 transition-all active:scale-95"
+            >
+              <MessageSquare className="w-4 h-4 text-white" />
+              <span>Order {edition.name} on WhatsApp</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          )}
 
-          {/* Download & Proceed to Interactive Order Sender */}
-          <button
-            onClick={() => onSelectForOrder(edition.id, currentTier)}
-            className="w-full py-1 text-center text-[11px] font-bold text-slate-600 hover:text-emerald-800 flex items-center justify-center gap-1.5 transition-colors hover:underline"
-          >
-            <Download className="w-3.5 h-3.5 text-amber-700" />
-            <span>Download & Proceed to Order Sender</span>
-            <ArrowRight className="w-3 h-3 text-amber-600" />
-          </button>
+          {/* Secondary Action */}
+          {isTrial ? (
+            <button
+              onClick={() => onSelectForOrder('trial', '7_days')}
+              className="w-full py-1 text-center text-[11px] font-bold text-blue-700 hover:text-blue-900 flex items-center justify-center gap-1.5 transition-colors hover:underline"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+              <span>Activate 7-Day Evaluation Operation/Services</span>
+              <ArrowRight className="w-3 h-3 text-blue-600" />
+            </button>
+          ) : (
+            <button
+              onClick={() => onSelectForOrder(edition.id, currentTier)}
+              className="w-full py-1 text-center text-[11px] font-bold text-slate-600 hover:text-emerald-800 flex items-center justify-center gap-1.5 transition-colors hover:underline"
+            >
+              <Download className="w-3.5 h-3.5 text-amber-700" />
+              <span>Download & Proceed to Order Sender</span>
+              <ArrowRight className="w-3 h-3 text-amber-600" />
+            </button>
+          )}
         </div>
       </div>
     );

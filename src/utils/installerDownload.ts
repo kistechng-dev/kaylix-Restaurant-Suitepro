@@ -310,3 +310,118 @@ export function triggerDownload(blob: Blob, filename: string) {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+export interface TrialPackageOptions {
+  customerName?: string;
+  businessName?: string;
+  phone?: string;
+  licenseCode?: string;
+  country?: string;
+}
+
+export async function generateTrialEvaluationPackage(options?: TrialPackageOptions): Promise<Blob> {
+  const zip = new JSZip();
+  const business = options?.businessName?.trim() || "Valued Restaurant & Lounge";
+  const contact = options?.customerName?.trim() || "General Manager";
+  const phone = options?.phone?.trim() || "08089697390";
+  const licenseKey = options?.licenseCode || "TRAL-7D9A1-2C4B8-7D-8F22";
+  const dateStr = new Date().toISOString().split('T')[0];
+  const expireDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+  // 1. One-Click Interactive 7-Day Free Evaluation Suite (Offline browser app)
+  zip.file('START_HERE_7_DAYS_EVALUATION.html', getEnterpriseHtmlApp());
+
+  // 2. Windows 1-Click Launchers
+  zip.file('One_Click_Trial_Evaluation_Setup.bat', getEnterpriseBatchScript());
+  zip.file('One_Click_Trial_Evaluation_Setup.vbs', getEnterpriseVbsScript());
+
+  // 3. Official 7-Day Free Evaluation License Certificate
+  const certText = `================================================================================
+KAYLIX KITCHEN & EATERY MANAGEMENT SYSTEM - 7-DAY FREE EVALUATION LICENSE
+================================================================================
+OFFICIAL EVALUATION PASS ISSUED BY: Kaylix Technology & POS Engineering
+REGISTERED EATERY: ${business}
+CONTACT PERSON: ${contact}
+PHONE NUMBER: ${phone}
+LICENSE KEY: ${licenseKey}
+STATUS: ACTIVE (7-Day Unrestricted Evaluation)
+ISSUED DATE: ${dateStr}
+EVALUATION EXPIRY DATE: ${expireDate} (7 Days Free Pass)
+SOFTWARE VERSION: v3.4.2 (Production Release)
+
+================================================================================
+ENABLED 7-DAY EVALUATION OPERATIONS & SERVICES:
+================================================================================
+[ACTIVE] 1. Counter Fast Billing & Cashier POS (Touchscreen / Desktop / Laptop)
+[ACTIVE] 2. Table & Room Management with Waiter Assignment
+[ACTIVE] 3. Kitchen Display System (KDS) & Order Routing
+[ACTIVE] 4. ESC/POS 80mm & 58mm Thermal Receipt Printing with Graphic Logos
+[ACTIVE] 5. Recipe Costing & Food Waste Stock Deductions
+[ACTIVE] 6. Waiter Mobile App / Tablet Ordering Interface
+[ACTIVE] 7. Daily Shift Z-Report & Cash Ledger Auditing
+[ACTIVE] 8. 100% Offline Local Database Engine (Zero Outage Risk)
+[ACTIVE] 9. Technical Setup & Remote Guidance Desk (+234 806 0395 329)
+
+HOW TO ACTIVATE IN APP:
+1. Double-click "START_HERE_7_DAYS_EVALUATION.html" or "One_Click_Trial_Evaluation_Setup.bat".
+2. Default Super-Admin Login:
+   - Username: admin
+   - Staff PIN: 123456
+3. If prompted for key, paste your evaluation key: ${licenseKey}
+4. For remote engineer setup assistance, contact WhatsApp: ${VENDOR_CONTACT.whatsappDisplay}
+================================================================================`;
+
+  zip.file('7_DAYS_FREE_EVALUATION_LICENSE_CERTIFICATE.txt', certText);
+
+  // 4. Operation Services Guide
+  const guideText = `================================================================================
+KAYLIX 7-DAY FREE EVALUATION: COMPLETE OPERATION & SERVICES MANUAL
+================================================================================
+Thank you for downloading the Kaylix 7-Day Free Evaluation Package!
+
+During this 7-day evaluation period, you have full unrestricted access to:
+- Offline POS cash registers, card transfers, split bills, and guest tabs
+- ESC/POS thermal receipt printing (USB, Bluetooth, and LAN Ethernet)
+- Real-time Kitchen Order Tickets (KOT) and Bar station printing
+- Menu and pricing modifications with automatic VAT/Service charge
+- Staff access control with PIN security
+
+UPGRADING AFTER EVALUATION:
+To upgrade to Basic, Standard, or Enterprises Plan without losing any of your
+menu or sales data, contact:
+- WhatsApp: ${VENDOR_CONTACT.whatsappDisplay}
+- Sales Desk: ${VENDOR_CONTACT.email}
+- Website: Central Portal
+================================================================================`;
+
+  zip.file('KAYLIX_7_DAY_EVALUATION_SERVICES_GUIDE.txt', guideText);
+
+  // 5. Sample Eatery Menu Template CSV
+  const sampleMenuCsv = `Category,Item Name,Barcode,Cost Price (NGN),Selling Price (NGN),Printer Destination,Tax Rate (%)
+Rice & Grains,Smokey Party Jollof Rice with Fried Plantain,RICE-001,800,2500,Kitchen,7.5
+Rice & Grains,Special Fried Rice with Shrimps,RICE-002,1100,3200,Kitchen,7.5
+Rice & Grains,Basmati Coconut Rice & Grilled Chicken,RICE-003,1400,3800,Kitchen,7.5
+Soups & Swallows,Egusi Soup with Assorted Meat & Pounded Yam,SWL-001,1200,3500,Kitchen,7.5
+Soups & Swallows,Seafood Okro Soup with Fresh Fish,SWL-002,2200,5500,Kitchen,7.5
+Grills & Bites,Grilled Catfish Point & Kill (Full Fish),GRL-001,2800,6500,Kitchen,7.5
+Grills & Bites,Spicy Peppered Goat Meat (Asun Special),GRL-002,1500,3500,Kitchen,7.5
+Grills & Bites,Crispy Chicken Wings (6pcs) & Chips,GRL-003,1600,3800,Kitchen,7.5
+Drinks & Cocktails,Chapman Classic Mocktail with Cucumber,DRK-001,600,2000,Bar,7.5
+Drinks & Cocktails,Fresh Watermelon Pineapple Juice (500ml),DRK-002,500,1500,Bar,7.5
+Drinks & Cocktails,Heineken Beer Bottle 600ml,DRK-003,750,1500,Bar,7.5
+Drinks & Cocktails,Bottled Table Water 75cl,DRK-004,150,400,Bar,0.0
+`;
+  zip.file('sample_eatery_menu_template.csv', sampleMenuCsv);
+
+  // 6. Config file
+  zip.file('config_trial_7days.ini', getEnterpriseIniConfig());
+
+  // 7. License verification text
+  zip.file('trial_license_verification.txt', `KAYLIX TRIAL 7-DAY EVALUATION
+Registered for: ${business}
+License Key: ${licenseKey}
+Vendor Support: ${VENDOR_CONTACT.whatsappDisplay}
+`);
+
+  return await zip.generateAsync({ type: 'blob' });
+}

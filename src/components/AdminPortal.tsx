@@ -41,6 +41,7 @@ import {
   Paperclip,
   Receipt,
   Image as ImageIcon,
+  History,
 } from 'lucide-react';
 import { AdminPricingManager } from './AdminPricingManager';
 import { DistributionHub } from './DistributionHub';
@@ -58,20 +59,27 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToPublic }) => {
   const [authError, setAuthError] = useState<string | null>(null);
   const [isVerifying, setIsVerifying] = useState(false);
 
-  // 2FA / Phone Recovery state for registered phone 234 806 0395 329
-  const ADMIN_RECOVERY_NUMBER = '234 806 0395 329';
-  const ADMIN_RECOVERY_NUMBER_RAW = '2348060395329';
+  // 2FA / Phone Authenticator state (Authorized owner recovery numbers: 08089697390 & 08060395329)
+  const [ownerPhoneInput, setOwnerPhoneInput] = useState('');
   const [isRequestingOtp, setIsRequestingOtp] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otpSuccessMessage, setOtpSuccessMessage] = useState<string | null>(null);
   const [otpCountdown, setOtpCountdown] = useState<number>(0);
-  const [generatedOtpCode, setGeneratedOtpCode] = useState<string | null>(null);
+  const [offlineOtpCode, setOfflineOtpCode] = useState<string | null>(null);
   const [whatsappTriggerUrl, setWhatsappTriggerUrl] = useState<string | null>(null);
   const [smsTriggerUrl, setSmsTriggerUrl] = useState<string | null>(null);
 
-  // Active view tab in admin: distribution hub and database are top views
-  const [activeTab, setActiveTab] = useState<'database' | 'distribution' | 'pricing' | 'generate' | 'validate' | 'batch' | 'health'>('distribution');
+  // Active view tab in admin: distribution hub, database, pricing, and staff-monitor
+  const [activeTab, setActiveTab] = useState<'database' | 'distribution' | 'pricing' | 'generate' | 'validate' | 'batch' | 'health' | 'staff-monitor'>('distribution');
   const [isRenderDoctorOpen, setIsRenderDoctorOpen] = useState(false);
+
+  // ==========================================
+  // STAFF PORTAL ACTIVITY MONITOR STATE
+  // ==========================================
+  const [staffActivities, setStaffActivities] = useState<any[]>([]);
+  const [isLoadingActivities, setIsLoadingActivities] = useState(false);
+  const [activitySearch, setActivitySearch] = useState('');
+  const [activityTypeFilter, setActivityTypeFilter] = useState('all');
 
   // ==========================================
   // CUSTOMER DATABASE STATE
@@ -213,6 +221,21 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToPublic }) => {
     }
   };
 
+  const fetchStaffActivities = async () => {
+    setIsLoadingActivities(true);
+    try {
+      const res = await fetch('/api/admin/staff-activities');
+      const data = await res.json();
+      if (data.success && Array.isArray(data.activities)) {
+        setStaffActivities(data.activities);
+      }
+    } catch (err) {
+      console.error('Error fetching staff activities:', err);
+    } finally {
+      setIsLoadingActivities(false);
+    }
+  };
+
   useEffect(() => {
     fetch('/api/health')
       .then((res) => res.json())
@@ -223,6 +246,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToPublic }) => {
   useEffect(() => {
     if (isAuthenticated) {
       fetchCustomerDatabase();
+      fetchStaffActivities();
     }
   }, [isAuthenticated]);
 
@@ -235,8 +259,32 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToPublic }) => {
     return () => clearInterval(timer);
   }, [otpCountdown]);
 
-  // Request random 6-digit OTP code to registered recovery phone 234 806 0395 329
+  // Authorized recovery phones validator (08089697390 & 08060395329)
+  const isAuthorizedPhone = (phone: string) => {
+    const clean = (phone || '').replace(/[^0-9]/g, '');
+    return (
+      clean === '08089697390' ||
+      clean === '2348089697390' ||
+      clean === '8089697390' ||
+      clean === '08060395329' ||
+      clean === '2348060395329' ||
+      clean === '8060395329'
+    );
+  };
+
+  // Request random 6-digit OTP code using owner's authenticator phone
   const handleRequestOtp = async (channel: 'whatsapp' | 'sms' | 'auto' = 'auto') => {
+    const rawPhone = ownerPhoneInput.trim();
+    if (!rawPhone) {
+      setAuthError("Please enter the owner's recovery phone number as identifier.");
+      return;
+    }
+
+    if (!isAuthorizedPhone(rawPhone)) {
+      setAuthError('Unrecognized phone number. Please enter an authorized owner / recovery identifier (e.g. 08089697390).');
+      return;
+    }
+
     setIsRequestingOtp(true);
     setAuthError(null);
     setOtpSuccessMessage(null);
@@ -245,16 +293,16 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToPublic }) => {
       const res = await fetch('/api/admin/request-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: rawPhone }),
       });
       const data = await res.json();
       if (data.success) {
         setOtpSent(true);
         setOtpCountdown(600); // 10 minutes
-        setGeneratedOtpCode(data.code);
         setWhatsappTriggerUrl(data.whatsappUrl);
         setSmsTriggerUrl(data.smsUrl);
         setOtpSuccessMessage(
-          `Security code (${data.code}) generated and sent to ${ADMIN_RECOVERY_NUMBER}.`
+          'Security verification code generated and transmitted. Please check your phone messages and enter the 6-digit code below.'
         );
 
         if (channel === 'whatsapp' || channel === 'auto') {
@@ -266,18 +314,20 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToPublic }) => {
         setAuthError(data.error || 'Failed to generate security code.');
       }
     } catch (err: any) {
-      // Offline fallback: generate random 6-digit code
+      // Offline fallback: generate random 6-digit code without displaying it on screen
       const localCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const cleanDigits = rawPhone.replace(/[^0-9]/g, '');
+      const targetPhone = cleanDigits.startsWith('0') ? '234' + cleanDigits.slice(1) : cleanDigits;
       const message = `*KAYLIX ADMIN PORTAL SECURITY OTP*\n\nYour one-time restricted admin unlock code is: *${localCode}*\n\nExpires in 10 minutes.`;
-      const waUrl = `https://wa.me/${ADMIN_RECOVERY_NUMBER_RAW}?text=${encodeURIComponent(message)}`;
-      const smsUrl = `sms:+${ADMIN_RECOVERY_NUMBER_RAW}?body=${encodeURIComponent(`Kaylix Admin Security Code: ${localCode}`)}`;
+      const waUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`;
+      const smsUrl = `sms:+${targetPhone}?body=${encodeURIComponent(`Kaylix Admin Security Code: ${localCode}`)}`;
 
       setOtpSent(true);
       setOtpCountdown(600);
-      setGeneratedOtpCode(localCode);
+      setOfflineOtpCode(localCode);
       setWhatsappTriggerUrl(waUrl);
       setSmsTriggerUrl(smsUrl);
-      setOtpSuccessMessage(`Security code (${localCode}) generated for ${ADMIN_RECOVERY_NUMBER}.`);
+      setOtpSuccessMessage('Security verification code generated and transmitted via WhatsApp/SMS.');
 
       if (channel === 'whatsapp' || channel === 'auto') {
         window.open(waUrl, '_blank');
@@ -310,9 +360,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToPublic }) => {
       const data = await response.json();
 
       if (!response.ok || !data.success) {
-        // Also check if matches generated local OTP or known staff codes
+        // Also check if matches generated offline OTP or known staff codes
         if (
-          (generatedOtpCode && clean === generatedOtpCode) ||
+          (offlineOtpCode && clean === offlineOtpCode) ||
           clean === '849200' ||
           clean === '123456' ||
           clean === '8492' ||
@@ -341,7 +391,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onBackToPublic }) => {
         clean === '2026' ||
         clean === 'admin' ||
         clean === 'kaylix' ||
-        (generatedOtpCode && clean === generatedOtpCode)
+        (offlineOtpCode && clean === offlineOtpCode)
       ) {
         setIsAuthenticated(true);
         setAuthError(null);
@@ -606,10 +656,34 @@ Reply to this message anytime!
     return matchesSearch && matchesPackage && matchesStatus;
   });
 
-  // Calculate summary metrics
+  // Calculate summary metrics & Account Balances (Only in Admin Portal)
   const totalRevenue = customers.reduce((sum, c) => sum + (c.amountPaid || 0), 0);
+  const zenithBalance = customers
+    .filter((c) => !c.paymentDetails?.receivingBank || c.paymentDetails?.receivingBank.toLowerCase().includes('zenith'))
+    .reduce((sum, c) => sum + (c.amountPaid || 0), 0);
+  const moniepointBalance = customers
+    .filter((c) => c.paymentDetails?.receivingBank && c.paymentDetails?.receivingBank.toLowerCase().includes('moniepoint'))
+    .reduce((sum, c) => sum + (c.amountPaid || 0), 0);
+  const pendingRevenue = customers
+    .filter((c) => c.status === 'pending')
+    .reduce((sum, c) => sum + (c.amountPaid || 0), 0);
   const activeLicensesCount = customers.filter((c) => c.status === 'active' && c.licenseCode && !c.licenseCode.includes('Pending')).length;
   const pendingOrdersCount = customers.filter((c) => c.status === 'pending' || c.licenseCode?.includes('Pending')).length;
+
+  // Filtered staff activities
+  const filteredActivities = staffActivities.filter((act) => {
+    const q = activitySearch.toLowerCase();
+    const matchesSearch =
+      !q ||
+      act.staffIdentifier?.toLowerCase().includes(q) ||
+      act.targetBusiness?.toLowerCase().includes(q) ||
+      act.targetCustomer?.toLowerCase().includes(q) ||
+      act.changesMade?.toLowerCase().includes(q) ||
+      act.licenseCode?.toLowerCase().includes(q);
+
+    const matchesType = activityTypeFilter === 'all' || act.actionType === activityTypeFilter;
+    return matchesSearch && matchesType;
+  });
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 py-6 px-4 sm:px-6 font-sans">
@@ -700,28 +774,36 @@ Reply to this message anytime!
             Customer database, order submissions, pricing control, and Master License Key Generator are restricted. Appointed staff and admin can unlock with their 6-digit security code or OTP requested via phone.
           </p>
 
-          {/* Phone 2FA Recovery Card */}
+          {/* Phone 2FA Authenticator Input Card */}
           <div className="mb-6 p-4 rounded-2xl bg-slate-50 border border-slate-200 text-left">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-black uppercase tracking-wider text-slate-500">
-                Registered Recovery Phone
+              <span className="text-[11px] font-black uppercase tracking-wider text-slate-700">
+                Owner / Authenticator Phone
               </span>
-              <span className="text-[10px] font-mono font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
-                Active 2FA
+              <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full border border-amber-200">
+                2FA Protected
               </span>
             </div>
 
+            <p className="text-[11px] text-slate-500 mb-2.5 leading-relaxed font-medium">
+              Enter the registered owner/staff authenticator phone number (e.g. <span className="font-mono font-bold text-slate-700">08089697390</span>) to request your one-time 6-digit access code:
+            </p>
+
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold shrink-0">
-                <Phone className="w-4 h-4" />
-              </div>
-              <div>
-                <span className="text-sm font-mono font-black text-slate-900 block">
-                  {ADMIN_RECOVERY_NUMBER}
-                </span>
-                <span className="text-[11px] text-slate-500">
-                  Instant SMS & WhatsApp delivery on request
-                </span>
+              <div className="relative flex-1">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <Phone className="w-4 h-4" />
+                </div>
+                <input
+                  type="tel"
+                  placeholder="Enter phone number (e.g. 08089697390)"
+                  value={ownerPhoneInput}
+                  onChange={(e) => {
+                    setOwnerPhoneInput(e.target.value);
+                    if (authError) setAuthError(null);
+                  }}
+                  className="w-full bg-white border border-slate-300 rounded-xl pl-9 pr-3 py-2.5 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-amber-600 focus:ring-1 focus:ring-amber-500"
+                />
               </div>
             </div>
 
@@ -752,7 +834,7 @@ Reply to this message anytime!
               </button>
             </div>
 
-            {/* OTP Status Feedback */}
+            {/* OTP Status Feedback - No plain phone number and No autofill */}
             {otpSent && (
               <div className="mt-3 p-3 rounded-xl bg-emerald-50 border border-emerald-300 space-y-1.5 text-xs text-emerald-950">
                 <div className="flex items-center justify-between font-bold">
@@ -767,12 +849,12 @@ Reply to this message anytime!
                   )}
                 </div>
 
-                <p className="text-[11px] text-emerald-800 leading-relaxed">
-                  A random 6-digit code has been prepared for <strong className="font-mono">{ADMIN_RECOVERY_NUMBER}</strong>.
+                <p className="text-[11px] text-emerald-800 leading-relaxed font-medium">
+                  A random 6-digit verification code has been dispatched. Please check your incoming message and enter the code below.
                 </p>
 
-                {/* Quick actions to open or autofill */}
-                <div className="pt-1 flex flex-wrap items-center gap-2">
+                {/* External links to apps only */}
+                <div className="pt-1 flex flex-wrap items-center gap-3">
                   {whatsappTriggerUrl && (
                     <a
                       href={whatsappTriggerUrl}
@@ -793,15 +875,6 @@ Reply to this message anytime!
                       <span>Open SMS App</span>
                     </a>
                   )}
-                  {generatedOtpCode && (
-                    <button
-                      type="button"
-                      onClick={() => setPinInput(generatedOtpCode)}
-                      className="ml-auto inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 hover:text-amber-950 bg-amber-100 hover:bg-amber-200 px-2 py-0.5 rounded transition-colors"
-                    >
-                      <span>Autofill ({generatedOtpCode})</span>
-                    </button>
-                  )}
                 </div>
               </div>
             )}
@@ -811,22 +884,13 @@ Reply to this message anytime!
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                  Enter 6-Digit Staff Security Code / OTP:
+                  Enter 6-Digit Security Code / Master PIN:
                 </label>
-                {otpSent && generatedOtpCode && (
-                  <button
-                    type="button"
-                    onClick={() => setPinInput(generatedOtpCode)}
-                    className="text-[11px] text-amber-800 font-bold hover:underline"
-                  >
-                    Paste Code
-                  </button>
-                )}
               </div>
 
               <input
                 type="password"
-                placeholder="e.g. 582914 (6-digit code)"
+                placeholder="Enter 6-digit code or PIN"
                 value={pinInput}
                 onChange={(e) => setPinInput(e.target.value)}
                 className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-center text-slate-900 font-mono tracking-widest text-xl font-bold focus:outline-none focus:border-amber-600 focus:bg-white focus:ring-2 focus:ring-amber-500/20"
@@ -859,11 +923,8 @@ Reply to this message anytime!
             </button>
 
             <div className="pt-2 text-center space-y-1 text-[11px] text-slate-500">
-              <div>
-                Registered Recovery Phone: <strong className="font-mono text-slate-800">{ADMIN_RECOVERY_NUMBER}</strong>
-              </div>
               <div className="text-slate-600 font-medium">
-                Appointed Staff Code Example: <code className="bg-slate-100 text-slate-800 px-1.5 py-0.5 rounded font-mono font-bold">849200</code> (or request 6-digit OTP above)
+                Authorized Admin Gateway • Enter 6-digit OTP dispatched to recovery device or master PIN
               </div>
             </div>
           </form>
@@ -945,6 +1006,18 @@ Reply to this message anytime!
                 <FileText className="w-4 h-4" />
                 <span>Reseller Bulk Batch</span>
               </button>
+
+              <button
+                onClick={() => setActiveTab('staff-monitor')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 whitespace-nowrap ${
+                  activeTab === 'staff-monitor'
+                    ? 'bg-amber-600 text-white shadow-xs'
+                    : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                <Activity className="w-4 h-4" />
+                <span>Staff Usage & Changes Record ({staffActivities.length})</span>
+              </button>
             </div>
 
             <div className="flex items-center gap-2 justify-between md:justify-end">
@@ -980,6 +1053,70 @@ Reply to this message anytime!
           ========================================== */}
           {activeTab === 'database' && (
             <div className="space-y-6">
+              {/* Account Balance Treasury Card (Admin Portal Only) */}
+              <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 rounded-2xl shadow-md border border-slate-700">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-700/80 pb-3 mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-black">
+                      <CreditCard className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 block">
+                        Admin Executive Treasury
+                      </span>
+                      <h3 className="text-base font-black text-white">Official Settlement Account Balances</h3>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-mono font-bold text-slate-300 bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-700">
+                      Total Ledger: ₦{totalRevenue.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="p-3.5 rounded-xl bg-slate-800/90 border border-slate-700">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Total Account Balance
+                    </span>
+                    <span className="text-xl font-black text-emerald-400 font-mono mt-0.5 block">
+                      ₦{totalRevenue.toLocaleString()}
+                    </span>
+                    <span className="text-[10px] text-slate-400">Sum of verified customer revenues</span>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-slate-800/90 border border-slate-700">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Zenith Bank Account
+                    </span>
+                    <span className="text-xl font-black text-amber-300 font-mono mt-0.5 block">
+                      ₦{zenithBalance.toLocaleString()}
+                    </span>
+                    <span className="text-[10px] text-slate-400">1016978239 • Kaylix Tech</span>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-slate-800/90 border border-slate-700">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Moniepoint Settlement
+                    </span>
+                    <span className="text-xl font-black text-blue-300 font-mono mt-0.5 block">
+                      ₦{moniepointBalance.toLocaleString()}
+                    </span>
+                    <span className="text-[10px] text-slate-400">6524890123 • Instant POS</span>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-slate-800/90 border border-slate-700">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+                      Pending Clearance
+                    </span>
+                    <span className="text-xl font-black text-orange-400 font-mono mt-0.5 block">
+                      ₦{pendingRevenue.toLocaleString()}
+                    </span>
+                    <span className="text-[10px] text-slate-400">{pendingOrdersCount} orders awaiting confirmation</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Summary Metric Cards */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
                 <div className="bg-white border border-slate-200/90 p-4 rounded-2xl shadow-xs">
@@ -993,22 +1130,22 @@ Reply to this message anytime!
 
                 <div className="bg-white border border-slate-200/90 p-4 rounded-2xl shadow-xs">
                   <div className="flex items-center justify-between text-slate-600 text-xs font-bold mb-1">
-                    <span>Recorded Revenue</span>
-                    <CreditCard className="w-4 h-4 text-emerald-700" />
+                    <span>Licenses Issued</span>
+                    <KeyRound className="w-4 h-4 text-emerald-700" />
                   </div>
                   <div className="text-2xl font-black text-emerald-700">
-                    ₦{totalRevenue.toLocaleString()}
+                    {activeLicensesCount}
                   </div>
-                  <span className="text-[10px] text-slate-500 font-medium">Direct Bank Settlement Total</span>
+                  <span className="text-[10px] text-slate-500 font-medium">Active Licensed Software</span>
                 </div>
 
                 <div className="bg-white border border-slate-200/90 p-4 rounded-2xl shadow-xs">
                   <div className="flex items-center justify-between text-slate-600 text-xs font-bold mb-1">
-                    <span>Active License Keys</span>
-                    <KeyRound className="w-4 h-4 text-amber-700" />
+                    <span>Staff Operations Log</span>
+                    <Activity className="w-4 h-4 text-amber-700" />
                   </div>
-                  <div className="text-2xl font-black text-slate-900">{activeLicensesCount}</div>
-                  <span className="text-[10px] text-slate-500 font-medium">Authenticated & Issued</span>
+                  <div className="text-2xl font-black text-slate-900">{staffActivities.length}</div>
+                  <span className="text-[10px] text-slate-500 font-medium">Tracked Staff Operations</span>
                 </div>
 
                 <div className="bg-white border border-slate-200/90 p-4 rounded-2xl shadow-xs">
@@ -1923,6 +2060,228 @@ Reply to this message anytime!
                   </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ==========================================
+              TAB: STAFF PORTAL USAGE RECORD & AUDIT
+          ========================================== */}
+          {activeTab === 'staff-monitor' && (
+            <div className="space-y-6">
+              {/* Header Banner */}
+              <div className="bg-white border border-slate-200/90 p-5 rounded-2xl shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center font-black">
+                    <Activity className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-slate-900">
+                      Staff Portal Usage Record & Audit Monitor
+                    </h3>
+                    <p className="text-xs text-slate-600 mt-0.5">
+                      Real-time recording of staff portal sessions, license sales, customer updates, and order registrations with precise timestamps.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={fetchStaffActivities}
+                    disabled={isLoadingActivities}
+                    className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
+                    title="Refresh Activity Log"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isLoadingActivities ? 'animate-spin' : ''}`} />
+                    <span className="hidden sm:inline">Refresh Log</span>
+                  </button>
+
+                  <a
+                    href="/api/admin/staff-activities/export/csv"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-black text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
+                  >
+                    <FileDown className="w-3.5 h-3.5" />
+                    <span>Export Staff Audit CSV</span>
+                  </a>
+                </div>
+              </div>
+
+              {/* Summary Stats */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">Total Staff Actions</span>
+                  <span className="text-2xl font-black text-slate-900 block mt-0.5">{staffActivities.length}</span>
+                  <span className="text-[10px] text-slate-500">Recorded operations</span>
+                </div>
+
+                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">Licenses Sold by Staff</span>
+                  <span className="text-2xl font-black text-emerald-700 block mt-0.5">
+                    {staffActivities.filter((a) => a.actionType === 'LICENSE_SOLD').length}
+                  </span>
+                  <span className="text-[10px] text-slate-500">Issued & bound to client</span>
+                </div>
+
+                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">Orders Handled</span>
+                  <span className="text-2xl font-black text-amber-700 block mt-0.5">
+                    {staffActivities.filter((a) => a.actionType === 'ORDER_REGISTERED' || a.actionType === 'STATUS_CHANGED').length}
+                  </span>
+                  <span className="text-[10px] text-slate-500">Processed through staff desk</span>
+                </div>
+
+                <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase block">Latest Staff Action</span>
+                  <span className="text-xs font-black text-slate-900 block mt-1 truncate">
+                    {staffActivities[0]?.timestamp ? new Date(staffActivities[0].timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Live'}
+                  </span>
+                  <span className="text-[10px] text-emerald-700 font-bold">Live Monitoring Active</span>
+                </div>
+              </div>
+
+              {/* Filter and Search */}
+              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div className="relative flex-1">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search staff actions, eatery, staff identifier, license..."
+                    value={activitySearch}
+                    onChange={(e) => setActivitySearch(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium text-slate-900 focus:outline-none focus:border-amber-600 focus:bg-white"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-600">Action Type:</span>
+                  <select
+                    value={activityTypeFilter}
+                    onChange={(e) => setActivityTypeFilter(e.target.value)}
+                    className="bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-800 focus:outline-none"
+                  >
+                    <option value="all">All Operations</option>
+                    <option value="LICENSE_SOLD">License Sold / Issued</option>
+                    <option value="ORDER_REGISTERED">Order Registered</option>
+                    <option value="STATUS_CHANGED">Status Changed</option>
+                    <option value="CUSTOMER_UPDATED">Customer Updated</option>
+                    <option value="LICENSE_VALIDATED">License Validated</option>
+                    <option value="STAFF_LOGIN">Staff Login</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Activity Log Table */}
+              <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-100 border-b border-slate-200 text-slate-700 uppercase font-black tracking-wider text-[10px]">
+                      <tr>
+                        <th className="py-3 px-3.5">Timestamp</th>
+                        <th className="py-3 px-3.5">Staff Identifier</th>
+                        <th className="py-3 px-3.5">Action Category</th>
+                        <th className="py-3 px-3.5">Target Business / Customer</th>
+                        <th className="py-3 px-3.5">Changes Made / Details</th>
+                        <th className="py-3 px-3.5">Amount Recorded</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 font-medium">
+                      {filteredActivities.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="py-10 text-center text-slate-500">
+                            No staff activities found matching current filter.
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredActivities.map((act) => (
+                          <tr key={act.id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="py-3 px-3.5 whitespace-nowrap text-slate-700">
+                              <div className="flex items-center gap-1.5">
+                                <Calendar className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                                <div>
+                                  <span className="font-bold text-slate-900 block">
+                                    {act.timestamp
+                                      ? new Date(act.timestamp).toLocaleDateString(undefined, {
+                                          month: 'short',
+                                          day: 'numeric',
+                                          year: 'numeric',
+                                        })
+                                      : 'Today'}
+                                  </span>
+                                  <span className="text-[10px] text-slate-500 block">
+                                    {act.timestamp
+                                      ? new Date(act.timestamp).toLocaleTimeString([], {
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                          second: '2-digit',
+                                        })
+                                      : ''}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+
+                            <td className="py-3 px-3.5 whitespace-nowrap">
+                              <span className="font-mono font-bold text-slate-900 block">{act.staffIdentifier}</span>
+                              <span className="text-[10px] text-slate-500 block">IP: {act.ipAddress || 'Authorized Session'}</span>
+                            </td>
+
+                            <td className="py-3 px-3.5 whitespace-nowrap">
+                              <span
+                                className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                                  act.actionType === 'LICENSE_SOLD'
+                                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                                    : act.actionType === 'ORDER_REGISTERED'
+                                    ? 'bg-blue-100 text-blue-800 border border-blue-300'
+                                    : act.actionType === 'STATUS_CHANGED'
+                                    ? 'bg-purple-100 text-purple-800 border border-purple-300'
+                                    : act.actionType === 'STAFF_LOGIN'
+                                    ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                                    : 'bg-slate-100 text-slate-800 border border-slate-300'
+                                }`}
+                              >
+                                {act.actionType.replace('_', ' ')}
+                              </span>
+                            </td>
+
+                            <td className="py-3 px-3.5">
+                              {act.targetBusiness ? (
+                                <div>
+                                  <span className="font-bold text-slate-900 block">{act.targetBusiness}</span>
+                                  {act.targetCustomer && (
+                                    <span className="text-[11px] text-slate-500 block">{act.targetCustomer}</span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-slate-400">System Gateway</span>
+                              )}
+                            </td>
+
+                            <td className="py-3 px-3.5 text-xs text-slate-800 leading-relaxed max-w-md">
+                              <div>{act.changesMade}</div>
+                              {act.licenseCode && (
+                                <code className="text-[10px] font-mono font-bold text-purple-900 bg-purple-50 px-1 py-0.5 rounded border border-purple-200 mt-1 inline-block">
+                                  {act.licenseCode}
+                                </code>
+                              )}
+                            </td>
+
+                            <td className="py-3 px-3.5 whitespace-nowrap">
+                              {act.amount ? (
+                                <span className="font-mono font-black text-emerald-700">
+                                  ₦{Number(act.amount).toLocaleString()}
+                                </span>
+                              ) : (
+                                <span className="text-slate-400">—</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           )}
 

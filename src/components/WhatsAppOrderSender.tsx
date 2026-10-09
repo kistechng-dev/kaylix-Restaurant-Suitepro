@@ -23,11 +23,15 @@ import {
   Trash2,
   Eye,
   XCircle,
+  Download,
+  Zap,
+  Sparkles,
 } from 'lucide-react';
 import { EditionType, OrderEditionType, DurationTier, OrderFormData, EditionDetail, HardwareAddon } from '../types';
 import { VENDOR_CONTACT, BANK_ACCOUNTS } from '../data/mockData';
 import { getEffectiveEditions, getEffectiveHardware } from '../utils/pricingStorage';
 import { GlobalLocationPicker, LocationSelection } from './GlobalLocationPicker';
+import { generateTrialEvaluationPackage, triggerDownload } from '../utils/installerDownload';
 
 interface WhatsAppOrderSenderProps {
   initialEdition: OrderEditionType;
@@ -388,6 +392,21 @@ Please confirm order availability and shipping / activation instructions. Thank 
         setSubmittedRef(data.customer.id);
         setCompletedOrderRecord(data.customer);
         setShowOrderSuccessModal(true);
+
+        // Auto-download 7-Day Free Evaluation Bundle with operational services if Trial plan
+        if (formData.edition === 'trial') {
+          try {
+            const trialBlob = await generateTrialEvaluationPackage({
+              customerName: formData.customerName,
+              businessName: formData.businessName,
+              phone: fullPhone || formData.phone,
+              licenseCode: data.customer.licenseCode,
+            });
+            triggerDownload(trialBlob, 'Kaylix_Restaurant_POS_7Day_Trial_Evaluation_InstallerBundle.zip');
+          } catch (dlErr) {
+            console.warn('Trial auto-download notification:', dlErr);
+          }
+        }
       }
     } catch (err) {
       console.warn('Logging order to backend database:', err);
@@ -755,9 +774,28 @@ Please confirm order availability and shipping / activation instructions. Thank 
                   </div>
                 </div>
               ) : (
-                <div className="p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-xs text-blue-900 flex items-center justify-between font-bold">
-                  <span>Trial License Duration: 7 Days Free Pass</span>
-                  <span className="font-mono text-emerald-800">FREE</span>
+                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 text-xs text-blue-950 space-y-2.5">
+                  <div className="flex items-center justify-between font-bold">
+                    <span className="flex items-center gap-1.5 text-blue-900 font-extrabold">
+                      <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
+                      Trial License Duration: 7 Days Free Pass
+                    </span>
+                    <span className="font-mono text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300 font-black">
+                      100% FREE PASS
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-700 leading-relaxed font-medium">
+                    Includes 7 days unrestricted evaluation operation/services: Counter Fast POS, Kitchen KDS, 80mm/58mm thermal receipt printing, waiter tablets, and local offline database.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleSubmitOrder(undefined, false)}
+                    disabled={isSubmitting}
+                    className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-xs flex items-center justify-center gap-1.5 shadow-md shadow-blue-600/20 transition-all active:scale-95 disabled:opacity-75"
+                  >
+                    <Download className="w-4 h-4 text-amber-300 stroke-[2.8]" />
+                    <span>Download Installer & Register 7-Day Free Services to Backend</span>
+                  </button>
                 </div>
               )}
 
@@ -1312,14 +1350,28 @@ Please confirm order availability and shipping / activation instructions. Thank 
                 <CheckCircle2 className="w-8 h-8 stroke-[2.5]" />
               </div>
               <h3 className="text-xl font-black text-slate-900">
-                Order & Payment Proof Submitted!
+                {formData.edition === 'trial'
+                  ? '7-Day Free Evaluation Activated & Downloaded!'
+                  : 'Order & Payment Proof Submitted!'}
               </h3>
               <p className="text-xs text-slate-600">
-                Your order reference is{' '}
-                <strong className="font-mono text-emerald-800 text-sm">
-                  #{submittedRef || completedOrderRecord?.id || 'KYLX-REC-SUCCESS'}
-                </strong>
-                . All details and attached payment proof have been saved to the Kaylix Central Database.
+                {formData.edition === 'trial' ? (
+                  <>
+                    Your 7-day trial registration has been saved to the central database under Reference{' '}
+                    <strong className="font-mono text-emerald-800 text-sm">
+                      #{submittedRef || completedOrderRecord?.id || 'KYLX-TRAL-SUCCESS'}
+                    </strong>
+                    . The official Windows installer bundle has been compiled and downloaded with full 7-day operational services.
+                  </>
+                ) : (
+                  <>
+                    Your order reference is{' '}
+                    <strong className="font-mono text-emerald-800 text-sm">
+                      #{submittedRef || completedOrderRecord?.id || 'KYLX-REC-SUCCESS'}
+                    </strong>
+                    . All details and attached payment proof have been saved to the Kaylix Central Database.
+                  </>
+                )}
               </p>
             </div>
 

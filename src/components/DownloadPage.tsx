@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { EditionType, OrderEditionType, DurationTier } from '../types';
 import { getEffectiveEditions, getCustomPricing, normalizePhoneNumber } from '../utils/pricingStorage';
-import { generateAllInOnePackage, triggerDownload } from '../utils/installerDownload';
+import { generateAllInOnePackage, triggerDownload, generateTrialEvaluationPackage } from '../utils/installerDownload';
 import { VENDOR_CONTACT } from '../data/mockData';
 import { GlobalLocationPicker, LocationSelection } from './GlobalLocationPicker';
 import { generateMasterLicenseKey } from '../utils/licenseGenerator';
@@ -192,6 +192,20 @@ export const DownloadPage: React.FC<DownloadPageProps> = ({
           spread: 80,
           origin: { y: 0.5 },
         });
+
+        if (selectedPlan === 'trial') {
+          try {
+            const trialBlob = await generateTrialEvaluationPackage({
+              customerName: regForm.customerName,
+              businessName: regForm.businessName,
+              phone: fullPhone,
+              licenseCode: data.customer?.licenseCode || generatedLicense,
+            });
+            triggerDownload(trialBlob, 'Kaylix_Restaurant_POS_7Day_Trial_Evaluation_InstallerBundle.zip');
+          } catch (tErr) {
+            console.warn('Trial auto-download failed', tErr);
+          }
+        }
 
         setRegSuccessData({
           customerName: regForm.customerName,
